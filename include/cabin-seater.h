@@ -10,7 +10,8 @@
 enum class SimulatorState
 {
 	DECISION = 1,
-	ACTION = 2
+	ACTION = 2,
+	COMPLETE = 3
 };
 
 struct OccupiableSpace
@@ -39,12 +40,26 @@ struct SeatSpace : OccupiableSpace
 		SeatSpace();
 };
 
+enum class PassengerState
+{
+	IN_QUEUE = 1,
+	IN_AISLE,
+	STOWING,
+	FAILED,
+	SATISFIED
+};
+
 class Passenger
 {
 	public:
 		int id;
 		int targetRow;
 		int targetSeatInRow;
+
+		int lifetime;
+		PassengerState state;
+
+		OccupiableSpace currentSpace;
 		bool occupySpace(OccupiableSpace &newSpace);
 };
 
