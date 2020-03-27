@@ -9,6 +9,12 @@
 bool g_Verbose = true;
 bool g_RunSimulation = true;
 uint64_t g_globalTimer = 0;
+CabinAisle g_MainAisle;
+SimulatorState g_SimState;
+
+const int g_NUMROWS = 5;
+const int g_NUMSEATS_PORT = 3;
+const int g_NUMSEATS_STBD = 3;
 
 void populateAisle(CabinAisle &aisle, int numAisles, int numSeatsPort, int numSeatsStarboard)
 {
@@ -128,13 +134,53 @@ bool analyzeRow(Passenger &p, std::pair<AisleSpace, std::pair<SeatGrouplet, Seat
 	}
 }
 
+void createPassengers_BackToFront(std::list<Passenger> &pAll, std::queue<Passenger> &pQueue, int numPassengers, int startingId)
+{
+	//Add passengers to the queue in order of seat location from back of the cabin
+	int currentRow = g_MainAisle.twoSidedSeating.end()->first; //Get id of last row
+	int assignedRow = g_NUMROWS - 1;
+	int maxSeatId = g_NUMSEATS_PORT + g_NUMSEATS_STBD - 1;
+	int assignedSeat = 0;
+
+	for (int i = startingId; i < startingId + numPassengers; i++)
+	{
+		Passenger p;
+		p.id = i;
+
+		//Assign seat
+		p.targetRow = assignedRow;
+		p.targetSeatInRow = assignedSeat;
+
+		p.state = PassengerState::IN_QUEUE;
+		pAll.push_back(p);
+		pQueue.push(p);
+		if (g_Verbose) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);
+
+		//Increment next assigned seat for the next passenger
+		assignedSeat++;
+		if (assignedSeat > maxSeatId)
+		{
+			//Change next assigned row
+			assignedRow--;
+			if (assignedRow < 0)
+			{
+				//All seats in cabin have been assigned, cannot create any more passengers
+				break;
+			}
+			else
+			{
+				assignedSeat = 0;
+			}
+		}
+	}
+}
+
 int main()
 {
-	SimulatorState g_SimState = SimulatorState::DECISION;
-	CabinAisle g_MainAisle;
+	g_SimState = SimulatorState::DECISION;
 
 	//Populate the main aisle
-	populateAisle(g_MainAisle, 5, 3, 7);
+	populateAisle(g_MainAisle, 7, 3, 3);
 
 	//Print the aisle's contents
 	printAisleContents(g_MainAisle);
@@ -143,29 +189,30 @@ int main()
 
 	//Create passenger list
 	std::list<Passenger> allPassengers;
-	std::queue<Passenger> passengerQueue;
+	std::queue<Passenger> passengersQueue;
 	//Populate passenger list
-	int numPassengers = 2;
+	int numPassengers = 3;
 	int startingId = 100;
-	
-	for (int i = startingId; i < startingId + numPassengers; i++)
-	{
-		Passenger p;
-		p.id = i;
-		p.targetRow = 4;
-		p.targetSeatInRow = 9;
-		p.state = PassengerState::IN_QUEUE;
-		allPassengers.push_back(p);
-		passengersQueue.push_back(p);
-		if (g_Verbose) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);
-	}
+	createPassengers_BackToFront(allPassengers, passengersQueue, numPassengers, startingId);
+
+	// for (int i = startingId; i < startingId + numPassengers; i++)
+	// {
+	// 	Passenger p;
+	// 	p.id = i;
+	// 	p.targetRow = 4;
+	// 	p.targetSeatInRow = 9;
+	// 	p.state = PassengerState::IN_QUEUE;
+	// 	allPassengers.push_back(p);
+	// 	passengersQueue.push(p);
+	// 	if (g_Verbose) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);
+	// }
 	
 	//Iterate over all passengers and have them step forward
 	int numPassengersFinished = 0;
 	while (g_RunSimulation)
 	{
 		g_globalTimer++;
-		printf("%i | ", g_globalTimer);
+		//if (g_Verbose) printf("%i | ", g_globalTimer);
 		for (std::list<Passenger>::iterator p_it = allPassengers.begin(); p_it != allPassengers.end(); p_it++)
 		{
 			if (p_it->state == PassengerState::SATISFIED || p_it->state == PassengerState::FAILED)
