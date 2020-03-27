@@ -9,9 +9,9 @@
 
 enum class SimulatorState
 {
-	DECISION = 1,
-	ACTION = 2,
-	COMPLETE = 3
+	ERROR = -1,
+	RUN = 1,
+	COMPLETE = 2
 };
 
 struct OccupiableSpace
@@ -55,7 +55,8 @@ class Passenger
 		int id;
 		int targetRow;
 		int targetSeatInRow;
-
+		int stowTime;
+		
 		int lifetime;
 		PassengerState state;
 

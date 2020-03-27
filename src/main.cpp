@@ -5,6 +5,16 @@
 #include <queue>
 
 #include <cabin-seater.h>
+#include <util.h>
+
+const int g_NUMROWS = 3;
+const int g_LASTROWINDEX = g_NUMROWS - 1;
+const int g_NUMSEATS_PORT = 3;
+const int g_NUMSEATS_STBD = 3;
+
+const int g_NUMPASSENGERS = 4;
+const int g_PASSENGER_MINSTOWTIME = 2;
+const int g_PASSENGER_MAXSTOWTIME = 10;
 
 bool g_Verbose = true;
 bool g_RunSimulation = true;
@@ -12,13 +22,9 @@ uint64_t g_globalTimer = 0;
 CabinAisle g_MainAisle;
 SimulatorState g_SimState;
 
-const int g_NUMROWS = 5;
-const int g_NUMSEATS_PORT = 3;
-const int g_NUMSEATS_STBD = 3;
-
-void populateAisle(CabinAisle &aisle, int numAisles, int numSeatsPort, int numSeatsStarboard)
+void populateAisle(CabinAisle &aisle, int numRows, int numSeatsPort, int numSeatsStarboard)
 {
-	for (int i = 0; i < numAisles; i++)
+	for (int i = 0; i < numRows; i++)
 	{
 		AisleSpace newAisleSpace;
 		newAisleSpace.id = i;
@@ -134,10 +140,12 @@ bool analyzeRow(Passenger &p, std::pair<AisleSpace, std::pair<SeatGrouplet, Seat
 	}
 }
 
-void createPassengers_BackToFront(std::list<Passenger> &pAll, std::queue<Passenger> &pQueue, int numPassengers, int startingId)
+void createPassengers_BackToFront_NonRandom(std::list<Passenger> &pAll, std::queue<Passenger> &pQueue, int numPassengers, int startingId)
 {
 	//Add passengers to the queue in order of seat location from back of the cabin
-	int currentRow = g_MainAisle.twoSidedSeating.end()->first; //Get id of last row
+	//Do not randomly assign seats within sections
+
+	int currentRow = g_MainAisle.twoSidedSeating.end()->first; //Begin with id of last row
 	int assignedRow = g_NUMROWS - 1;
 	int maxSeatId = g_NUMSEATS_PORT + g_NUMSEATS_STBD - 1;
 	int assignedSeat = 0;
@@ -146,6 +154,7 @@ void createPassengers_BackToFront(std::list<Passenger> &pAll, std::queue<Passeng
 	{
 		Passenger p;
 		p.id = i;
+		p.stowTime = randInt(g_PASSENGER_MINSTOWTIME, g_PASSENGER_MAXSTOWTIME);
 
 		//Assign seat
 		p.targetRow = assignedRow;
@@ -175,12 +184,36 @@ void createPassengers_BackToFront(std::list<Passenger> &pAll, std::queue<Passeng
 	}
 }
 
+void createPassengers_BackToFront_Random(std::list<Passenger> &pAll, std::queue<Passenger> &pQueue, int numPassengers, int startingId, int numRowsInSections)
+{
+	//Add passengers to the queue based on seat location from the back of the cabin
+	//Create sections of assigned seats. Within these sections, assign seats randomly
+
+	//todo
+}
+
+void createPassengers_FrontToBack_NonRandom(std::list<Passenger> &pAll, std::queue<Passenger> &pQueue, int numPassengers, int startingId, int numRowsInSections)
+{
+	//Add passengers to the queue based on seat location from the front of the cabin
+	//Do not randomly assign seats within sections
+
+	//todo
+}
+
+void createPassengers_FrontToBack_Random(std::list<Passenger> &pAll, std::queue<Passenger> &pQueue, int numPassengers, int startingId, int numRowsInSections)
+{
+	//Add passengers to the queue based on seat location from the front of the cabin
+	//Create sections of assigned seats. Within these sections, assign seats randomly
+
+	//todo
+}
+
 int main()
 {
-	g_SimState = SimulatorState::DECISION;
+	g_SimState = SimulatorState::RUN;
 
 	//Populate the main aisle
-	populateAisle(g_MainAisle, 7, 3, 3);
+	populateAisle(g_MainAisle, g_NUMROWS, g_NUMSEATS_PORT, g_NUMSEATS_STBD);
 
 	//Print the aisle's contents
 	printAisleContents(g_MainAisle);
@@ -190,29 +223,22 @@ int main()
 	//Create passenger list
 	std::list<Passenger> allPassengers;
 	std::queue<Passenger> passengersQueue;
-	//Populate passenger list
-	int numPassengers = 3;
-	int startingId = 100;
-	createPassengers_BackToFront(allPassengers, passengersQueue, numPassengers, startingId);
 
-	// for (int i = startingId; i < startingId + numPassengers; i++)
-	// {
-	// 	Passenger p;
-	// 	p.id = i;
-	// 	p.targetRow = 4;
-	// 	p.targetSeatInRow = 9;
-	// 	p.state = PassengerState::IN_QUEUE;
-	// 	allPassengers.push_back(p);
-	// 	passengersQueue.push(p);
-	// 	if (g_Verbose) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);
-	// }
+	//Populate passenger list
+	int startingId = 100;
+
+	//Select a queueing algorithm
+	createPassengers_BackToFront_NonRandom(allPassengers, passengersQueue, g_NUMPASSENGERS, startingId);
+
 	
 	//Iterate over all passengers and have them step forward
 	int numPassengersFinished = 0;
 	while (g_RunSimulation)
 	{
 		g_globalTimer++;
-		//if (g_Verbose) printf("%i | ", g_globalTimer);
+		if (g_Verbose) printf("%i | ", g_globalTimer);
+
+		//Iterate over all passengers and modify their states/position as needed
 		for (std::list<Passenger>::iterator p_it = allPassengers.begin(); p_it != allPassengers.end(); p_it++)
 		{
 			if (p_it->state == PassengerState::SATISFIED || p_it->state == PassengerState::FAILED)
@@ -230,9 +256,18 @@ int main()
 				if (!firstSpace.occupied)
 				{
 					if (g_Verbose) printf("Identified first aisle space as id %i\n", firstSpace.id);
-					p_it->occupySpace(firstSpace);
-					p_it->state = PassengerState::IN_AISLE;
-					if (g_Verbose) printf("Passenger %i: Entered aisle at space %i\n", p_it->id, p_it->currentSpace.id);
+					if (p_it->occupySpace(firstSpace))
+					{
+						firstSpace.setOccupied();
+						p_it->state = PassengerState::IN_AISLE;
+						if (g_Verbose) printf("Passenger %i: Entered aisle at space %i\n", p_it->id, p_it->currentSpace.id);
+					}
+					else
+					{
+						//Was not able to occupy the space for some reason
+						if (g_Verbose) printf("Passenger %i: Couldn't enter aisle space %i\n", p_it->id, firstSpace.id);
+						if (g_Verbose) printf("Passenger %i: Gonna stay in queue for now\n", p_it->id);
+					}
 				}
 				else
 				{
@@ -270,20 +305,52 @@ int main()
 					//Move to the next aisle space if possible
 					auto currentAisleSpaceId = p_it->currentSpace.id;
 					int nextAisleSpaceId = currentAisleSpaceId + 1;
+					if (nextAisleSpaceId > g_LASTROWINDEX)
+					{
+						//Passenger hit the end of the aisle without finding a seat
+						//Failure state
+						p_it->state = PassengerState::FAILED;
+						OccupiableSpace *o = &(p_it->currentSpace);
+						o = NULL;
+						numPassengersFinished++;
+
+					}
 					auto nextAisleSpace = g_MainAisle.twoSidedSeating[nextAisleSpaceId].first;
 					p_it->occupySpace(nextAisleSpace);
+					nextAisleSpace.setOccupied();
+
+					if (g_Verbose) printf("Passenger %i: Moved forward to aisle space %i\n", p_it->id, p_it->currentSpace.id);
 				}
 			}
 		}
 
 		//Check if we hit the end state
-		if (numPassengersFinished == numPassengers)
+		if (numPassengersFinished == g_NUMPASSENGERS)
 		{
 			//All passengers are done moving
+			g_SimState = SimulatorState::COMPLETE;
 			g_RunSimulation = false;
+		}
+
+		//Check for infinite looping
+		if (g_globalTimer > 100)
+		{
+			printf("Breaking\n");
+			break;
 		}
 	}
 	
+	// for (int i = startingId; i < startingId + numPassengers; i++)
+	// {
+	// 	Passenger p;
+	// 	p.id = i;
+	// 	p.targetRow = 4;
+	// 	p.targetSeatInRow = 9;
+	// 	p.state = PassengerState::IN_QUEUE;
+	// 	allPassengers.push_back(p);
+	// 	passengersQueue.push(p);
+	// 	if (g_Verbose) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);
+	// }
 
 	// int passengerLocation = 0;
 	// bool pSatisfied = false;
