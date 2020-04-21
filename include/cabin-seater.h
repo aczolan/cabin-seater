@@ -25,16 +25,11 @@ struct OccupiableSpace
 
 struct AisleSpace : OccupiableSpace
 {
-	public:
-		int id;
-		//bool occupySpace(Passenger newOccupant);
-		//bool leaveSpace();
 };
 
 struct SeatSpace : OccupiableSpace
 {
 	public:
-		//bool occupySpace(Passenger newOccupant);
 		bool leaveSpace();
 		SeatSpace(int id);
 		SeatSpace();
@@ -56,7 +51,7 @@ class Passenger
 		int targetRow;
 		int targetSeatInRow;
 		int stowTime;
-		
+
 		int lifetime;
 		PassengerState state;
 
@@ -68,7 +63,7 @@ class SeatGrouplet
 {
 	public:
 		int numSeats; //Number of seats in this grouplet
-		std::map<int, SeatSpace> groupletSeats;
+		std::map<int, SeatSpace> seatsMap;
 			//int: seat id
 			//SeatSpace: space to occupy
 		SeatGrouplet(int numSeats, int startingId);
@@ -83,7 +78,36 @@ class CabinAisle
 			//pair<SeatGrouplet, SeatGrouplet>
 				//SeatGrouplet (1): Seats on starboard side
 				//SeatGrouplet (2): Seats on port side
+		void Populate(int, int, int);
+		void PrintAisle();
+		void ClearAllSeats();
 
+};
+
+//Hold all global stuff
+class Airplane
+{
+	private:
+		bool verboseOutput;
+	public:
+		int NumRows;
+		int LastRowIndex;
+		int NumSeatsPort;
+		int NumSeatsStbd;
+
+		int NumPassengers;
+		int PassengerMinStowTime;
+		int PassengerMaxStowTime;
+		int PassengerIdStartingIndex;
+		CabinAisle MainAisle;
+
+		bool CheckSomeSeats(SeatGrouplet, int, SeatSpace&);
+		bool CheckSeatsInRow(Passenger&, int, bool&, bool&);
+		void PopulateMainAisle();
+
+		//Constructor
+		Airplane();
+		Airplane(bool);
 };
 
 #endif //INCLUDE_CABIN_SEATER_H
