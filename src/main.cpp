@@ -30,8 +30,8 @@ SimulatorState g_SimState;
 
 bool PopulatePassengerList(int queueingAlgorithm, Airplane plane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
 {
-	//1: BackToFrontNonRandom
-	//2: FrontToBackNonRandom
+	//1: Back-To-Front
+	//2: Front-To-Back
 	//3: Random
 	//4: Window-Middle-Aisle
 	//5: Steffen Perfect
@@ -40,10 +40,10 @@ bool PopulatePassengerList(int queueingAlgorithm, Airplane plane, std::list<Pass
 	switch(queueingAlgorithm)
 	{
 		case 1:
-			createPassengers_BackToFront_NonRandom(plane, pAll, pQueue);
+			createPassengers_BackToFront(plane, pAll, pQueue);
 			return true;
 		case 2:
-			createPassengers_FrontToBack_NonRandom(plane, pAll, pQueue);
+			createPassengers_FrontToBack(plane, pAll, pQueue);
 			return true;
 		case 3:
 			createPassengers_Random(plane, pAll, pQueue);

@@ -1,0 +1,6 @@
+sampleRun_BackToFront,1,15,4,3,3,2,10,187.000000
+sampleRun_FrontToBack,2,15,4,3,3,2,10,187.000000
+sampleRun_Random,3,10,4,3,3,2,10,28.000000
+sampleRun_WindowMiddleAisle,4,15,4,3,3,2,10,45.000000
+sampleRun_SteffenPerfect,5,15,4,3,3,2,10,41.000000
+sampleRun_SteffenModified,6,15,4,3,3,2,10,44.000000
