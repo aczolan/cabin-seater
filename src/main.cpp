@@ -8,6 +8,7 @@
 #include <cabin.h>
 #include <airplane.h>
 #include <methods.h>
+#include <util.h>
 
 const int setting_NUMROWS = 3;
 const int setting_LASTROWINDEX = setting_NUMROWS - 1;
@@ -60,37 +61,32 @@ void PrintPassengersList(std::list<Passenger> pList)
 	}
 }
 
-// //Get command line arguments
-// bool ParseArgs(int argc, char* argv[], Airplane simAirplane)
-// {
-// 	int numExpectedArgs = 7;
-// 	//argv[0] = program name
-// 	//argv[1] = csv to append to
-// 	//argv[2] = queueing algorithm id
-// 	//argv[3] = min stow time
-// 	//argv[4] = max stow time
-// 	//argv[5] = num passengers
-// 	//argv[6] = num rows
+std::string GetOutputData(Airplane simAirplane, std::list<Passenger> pList)
+{
+	// run id, q alg, num passengers, num rows, num seats port, num seats stbd, min stow, max stow, avg passenger lifetime
 
-// 	//todo:
-// 	//argv[7] = num seats port
-// 	//argv[8] = num seats stbd
+	//Calculate avg passenger lifetime
+	int sumLifetimes = 0;
+	for (std::list<Passenger>::iterator p_it = pList.begin(); p_it != pList.end(); p_it++)
+	{
+		sumLifetimes += p_it->lifetime;
+	}
+	double avgLifetime = sumLifetimes / pList.size() * 1.0;
 
-// 	if (argc != numExpectedArgs)
-// 	{
-// 		//Wrong number of args
-// 		printf("Incorrect number of args. Expected %i, got %i\n",
-// 			   numExpectedArgs, argc);
-// 		return false;
-// 	}
+	std::string ret = "" + 
+					simAirplane.RunID + "," +
+					std::to_string(simAirplane.SelectedAlgorithmID) + "," +
+					std::to_string(simAirplane.NumPassengers) + "," +
+					std::to_string(simAirplane.NumRows) + "," +
+					std::to_string(simAirplane.NumSeatsPort) + "," +
+					std::to_string(simAirplane.NumSeatsStbd) + "," +
+					std::to_string(simAirplane.PassengerMinStowTime) + "," +
+					std::to_string(simAirplane.PassengerMaxStowTime) + "," +
+					std::to_string(avgLifetime) +
+					"\n";
 
-// 	simAirplane.CSVname = std::stoi(argv[1]);
-// 	simAirplane.SelectedAlgorithmID = std::stoi(argv[2]);
-// 	simAirplane.PassengerMinStowTime = std::stoi(argv[3]);
-// 	simAirplane.PassengerMaxStowTime = std::stoi(argv[4]);
-// 	simAirplane.NumPassengers = std::stoi(argv[5]);
-// 	simAirplane.NumRows = std::stoi(argv[6]);
-// }
+	return ret;
+}
 
 int main(int argc, char *argv[])
 {
@@ -110,7 +106,16 @@ int main(int argc, char *argv[])
 	SimAirplane.MainAisle;
 
 	//Get command line arguments and set members of SimAirplane
-	int numExpectedArgs = 7;
+	//argv[0] = program name
+	//argv[1] = run id
+	//argv[2] = csv to append to
+	//argv[3] = queueing algorithm id
+	//argv[4] = min stow time
+	//argv[5] = max stow time
+	//argv[6] = num passengers
+	//argv[7] = num rows
+
+	int numExpectedArgs = 8;
 	if (argc != numExpectedArgs)
 	{
 		//Wrong number of args
@@ -120,13 +125,30 @@ int main(int argc, char *argv[])
 		//exit
 	}
 
-	std::vector<std::string> argList(argv, argv + argc);
-	SimAirplane.CSVname = std::atoi(argList[1].c_str());
-	SimAirplane.SelectedAlgorithmID = std::atoi(argList[2].c_str());
-	SimAirplane.PassengerMinStowTime = std::atoi(argList[3].c_str());
-	SimAirplane.PassengerMaxStowTime = std::atoi(argList[4].c_str());
-	SimAirplane.NumPassengers = std::atoi(argList[5].c_str());
-	SimAirplane.NumRows = std::atoi(argList[6].c_str());
+	std::vector<char*> ArgsList;
+
+	printf("GIVEN ARGS:\n");
+	for (int i = 0; i < argc; ++i)
+	{
+		printf("%s\n", argv[i]);
+		ArgsList.push_back(argv[i]);
+	}
+
+	std::string s_runID(ArgsList[1]);
+	SimAirplane.RunID = s_runID;
+	std::string s_CSVname(ArgsList[2]);
+	SimAirplane.CSVname = s_CSVname;
+	SimAirplane.SelectedAlgorithmID = std::atoi(ArgsList[3]);
+	SimAirplane.PassengerMinStowTime = std::atoi(ArgsList[4]);
+	SimAirplane.PassengerMaxStowTime = std::atoi(ArgsList[5]);
+	SimAirplane.NumPassengers = std::atoi(ArgsList[6]);
+	SimAirplane.NumRows = std::atoi(ArgsList[7]);
+
+	printf("ArgsList Contents:\n");
+	for (int i = 0; i < argc; i++)
+	{
+		printf("%s\n", ArgsList[i]);
+	}
 
 	//Populate the main aisle
 	SimAirplane.PopulateMainAisle();
@@ -348,12 +370,8 @@ int main(int argc, char *argv[])
 	SimAirplane.MainAisle.PrintAisle();
 	PrintPassengersList(allPassengers);
 
-	// SimAirplane.MainAisle.FillAllSeats();
-	// SimAirplane.MainAisle.PrintAisle();
-	// printf("Seat 2-2: %s\n", 
-	// 		SimAirplane.MainAisle.twoSidedSeating.at(2).second.first.seatsMap.at(2).occupied ? "Occupied" : "NOT Occupuied");
-	// SimAirplane.MainAisle.twoSidedSeating.at(2).second.first.seatsMap.at(2).occupied = true;
-	// printf("Seat 2-2: %s\n", 
-	// 		SimAirplane.MainAisle.twoSidedSeating.at(2).second.first.seatsMap.at(2).occupied ? "Occupied" : "NOT Occupuied");
+	bool writeToOutput = appendLineToFile(SimAirplane.CSVname, GetOutputData(SimAirplane, allPassengers));
+	if (writeToOutput) printf("Wrote to %s", SimAirplane.CSVname);
+
 	printf("Done.\n");
 }
