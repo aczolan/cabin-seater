@@ -40,6 +40,11 @@ bool Passenger::occupySpace(OccupiableSpace &newSpace)
 	}
 }
 
+bool Passenger::CheckCurrentRow()
+{
+	return (this->targetRow == this->currentSpace.id);
+}
+
 bool Passenger::IsEqual(Passenger p)
 {
 	bool conditions = 

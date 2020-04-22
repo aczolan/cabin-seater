@@ -20,11 +20,19 @@ bool Airplane::CheckSomeSeats(SeatGrouplet groupletToCheck, int targetSeatId, Se
 	std::map<int, SeatSpace>::iterator seat_it;
 	for (seat_it = seatsToCheck.begin(); seat_it != seatsToCheck.end(); seat_it++)
 	{
+		if (verboseOutput) printf(".. Checking seat with id %i\n", seat_it->second.id);
 		if (seat_it->second.id == targetSeatId)
 		{
+			if (verboseOutput) printf(".. Match! seat_it->second.id=%i, targetSeatId=%i\n",
+									  seat_it->second.id, targetSeatId);
 			//Found the target
 			foundSpace = seat_it->second;
 			return true;
+		}
+		else
+		{
+			if (verboseOutput) printf(".. Not a match. seat_it->second.id=%i, targetSeatId=%i\n",
+									  seat_it->second.id, targetSeatId);
 		}
 	}
 	//Could not find target

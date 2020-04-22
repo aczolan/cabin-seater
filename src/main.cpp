@@ -13,7 +13,7 @@ const int setting_LASTROWINDEX = setting_NUMROWS - 1;
 const int setting_NUMSEATS_PORT = 3;
 const int setting_NUMSEATS_STBD = 3;
 
-const int setting_NUMPASSENGERS = 4;
+const int setting_NUMPASSENGERS = 7;
 const int setting_PASSENGER_MINSTOWTIME = 2;
 const int setting_PASSENGER_MAXSTOWTIME = 10;
 const int setting_PASSENGERS_STARTING_INDEX = 100;
@@ -88,7 +88,7 @@ int main()
 	{
 		g_globalTimer++;
 		bool passengerDequeuedThisTurn = false;
-		if (setting_Verbose) printf("| TIME: %lu |\n", g_globalTimer);
+		if (setting_Verbose) printf("\n\n| TIME: %lu |\n\n", g_globalTimer);
 
 		//Iterate over all passengers and modify their states/position as needed
 		for (std::list<Passenger>::iterator p_it = allPassengers.begin(); p_it != allPassengers.end(); p_it++)
@@ -138,51 +138,83 @@ int main()
 			}
 			else if (p_it->state == PassengerState::IN_AISLE)
 			{
-				//Check this row for the target seat
-				//For now, immediately take the seat if it is unoccupied
-				bool foundSeat = false;
-				bool tookSeat = false;
-				//if (analyzeRow(*p_it, SimAirplane.MainAisle.twoSidedSeating[p_it->currentSpace.id], foundSeat, tookSeat))
-				if (SimAirplane.CheckSeatsInRow(*p_it, p_it->currentSpace.id, foundSeat, tookSeat))
+				if (setting_Verbose) printf("Passenger %i: I'm at aisle space %i. Gonna try to find my seat (%i-%i) at this row.\n",
+											p_it->id, p_it->currentSpace.id,
+											p_it->targetRow, p_it->targetSeatInRow);
+
+				//Check to see if the passenger has reached its target row
+				if (p_it->CheckCurrentRow())
 				{
-					//Seat was found
-					if (tookSeat)
+					//Passenger has reached its target row!
+
+					//Check this row for the target seat
+					//For now, immediately take the seat if it is unoccupied
+					bool foundSeat = false;
+					bool tookSeat = false;
+					if (SimAirplane.CheckSeatsInRow(*p_it, p_it->currentSpace.id, foundSeat, tookSeat))
 					{
-						p_it->state = PassengerState::SATISFIED;
-						numPassengersFinished++;
-					}
-					else
-					{
-						//Seat was found but not taken
-						//Failure state
-						p_it->state = PassengerState::FAILED;
-						//Set passenger's space to null
-						OccupiableSpace *o = &(p_it->currentSpace);
-						o = NULL;
-						numPassengersFinished++;
+						if (setting_Verbose) printf("Passenger %i: CheckSeatsInRowResults: Found=%s, Took=%s\n",
+													p_it->id, 
+													foundSeat ? "True" : "False",
+													tookSeat ? "True" : "False");
+
+						//Seat was found
+						if (tookSeat)
+						{
+							if (setting_Verbose) printf("Passenger %i found its seat!\n", p_it->id);
+							p_it->state = PassengerState::SATISFIED;
+							numPassengersFinished++;
+						}
+						else
+						{
+							//Seat was found but not taken
+							if (setting_Verbose) printf("Passenger %i: Error: Found target seat but could not take it.\n", p_it->id);
+
+							//Failure state
+							p_it->state = PassengerState::FAILED;
+							//Set passenger's space to null
+							OccupiableSpace *o = &(p_it->currentSpace);
+							o = NULL;
+							numPassengersFinished++;
+						}
 					}
 				}
 				else
 				{
-					//Target seat was not in this row
+					//Passenger has not reached its target row yet
 					//Move to the next aisle space if possible
-					auto currentAisleSpaceId = p_it->currentSpace.id;
-					int nextAisleSpaceId = currentAisleSpaceId + 1;
+					int nextAisleSpaceId = p_it->currentSpace.id + 1;
 					if (nextAisleSpaceId > SimAirplane.LastRowIndex)
 					{
 						//Passenger hit the end of the aisle without finding a seat
+
+						if (setting_Verbose) printf("Passenger %i: Error: Hit the end of the aisle without finding the target seat.\n", p_it->id);
 						//Failure state
 						p_it->state = PassengerState::FAILED;
 						OccupiableSpace *o = &(p_it->currentSpace);
 						o = NULL;
 						numPassengersFinished++;
 					}
-					auto nextAisleSpace = SimAirplane.MainAisle.twoSidedSeating[nextAisleSpaceId].first;
-					p_it->occupySpace(nextAisleSpace);
-					nextAisleSpace.setOccupied();
-
-					if (setting_Verbose) printf("Passenger %i: Moved forward to aisle space %i\n", p_it->id, p_it->currentSpace.id);
+					else
+					{
+						auto nextAisleSpace = SimAirplane.MainAisle.twoSidedSeating[nextAisleSpaceId].first;
+						if (p_it->occupySpace(nextAisleSpace))
+						{
+							//Next aisle space is not occupied
+							nextAisleSpace.setOccupied();
+							if (setting_Verbose) printf("Passenger %i: Moved forward to aisle space %i\n",
+														p_it->id, p_it->currentSpace.id);
+						}
+						else
+						{
+							//Next aisle space is occupied
+							if (setting_Verbose) printf("Passenger %i: Staying at aisle space %i\n",
+														p_it->id, p_it->currentSpace.id);
+						}
+					}
+					
 				}
+
 			}
 		}
 
@@ -191,6 +223,7 @@ int main()
 		{
 			//All passengers are done moving
 			g_SimState = SimulatorState::COMPLETE;
+			printf("All passengers found their seats!\n");
 			g_RunSimulation = false;
 		}
 

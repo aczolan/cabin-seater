@@ -57,6 +57,7 @@ class Passenger
 
 		OccupiableSpace currentSpace;
 		bool occupySpace(OccupiableSpace &newSpace);
+		bool CheckCurrentRow();
 
 		bool IsEqual(Passenger);
 };
