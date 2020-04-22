@@ -7,9 +7,9 @@
 
 class Airplane
 {
-	private:
-		bool verboseOutput;
 	public:
+		bool verboseOutput;
+
 		std::string RunID;
 		std::string CSVname;
 		int SelectedAlgorithmID;

@@ -28,6 +28,27 @@ uint64_t g_globalTimer = 0;
 //CabinAisle g_MainAisle;
 SimulatorState g_SimState;
 
+bool PopulatePassengerList(int queueingAlgorithm, Airplane plane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
+{
+	//0: BackToFrontNonRandom
+	//1: FrontToBackNonRandom
+	//2: Random
+
+	switch(queueingAlgorithm)
+	{
+		case 0:
+			createPassengers_BackToFront_NonRandom(plane, pAll, pQueue);
+			return true;
+		case 1:
+			createPassengers_FrontToBack_NonRandom(plane, pAll, pQueue);
+			return true;
+
+
+		default:
+			return false;
+	}
+}
+
 void PrintQueue(std::queue<Passenger> q)
 {
 	int index = 0;
@@ -144,7 +165,7 @@ int main(int argc, char *argv[])
 	SimAirplane.NumPassengers = std::atoi(ArgsList[6]);
 	SimAirplane.NumRows = std::atoi(ArgsList[7]);
 
-	printf("ArgsList Contents:\n");
+	if (setting_Verbose) printf("ArgsList Contents:\n");
 	for (int i = 0; i < argc; i++)
 	{
 		printf("%s\n", ArgsList[i]);
@@ -164,10 +185,20 @@ int main(int argc, char *argv[])
 	std::queue<Passenger> passengersQueue;
 
 	//Populate passenger list
+	//**********
 	//Select a queueing algorithm
-	createPassengers_BackToFront_NonRandom(SimAirplane, allPassengers, passengersQueue);
-	PrintPassengersList(allPassengers);
-	PrintQueue(passengersQueue);
+	if (setting_Verbose) printf("Creating passengers with algorithm %i...\n", SimAirplane.SelectedAlgorithmID);
+	bool createPassengersSuccess = PopulatePassengerList(SimAirplane.SelectedAlgorithmID, SimAirplane, allPassengers, passengersQueue);
+	if (!createPassengersSuccess)
+	{
+		//Error creating passengers
+		printf("Error creating passengers using algorithm %i.\n", SimAirplane.SelectedAlgorithmID);
+		return 0;
+		//exit
+	}
+
+	if (setting_Verbose) PrintPassengersList(allPassengers);
+	if (setting_Verbose) PrintQueue(passengersQueue);
 	
 	//Iterate over all passengers and have them step forward
 	int numPassengersFinished = 0;
@@ -371,7 +402,7 @@ int main(int argc, char *argv[])
 	PrintPassengersList(allPassengers);
 
 	bool writeToOutput = appendLineToFile(SimAirplane.CSVname, GetOutputData(SimAirplane, allPassengers));
-	if (writeToOutput) printf("Wrote to %s", SimAirplane.CSVname);
+	if (writeToOutput) printf("Wrote to %s.\n", SimAirplane.CSVname.c_str());
 
-	printf("Done.\n");
+	printf("Done!\n");
 }
