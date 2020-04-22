@@ -3,7 +3,7 @@
 #include <list>
 #include <cstdio>
 
-#include <cabin-seater.h>
+#include <cabin.h>
 
 void OccupiableSpace::setOccupied()
 {
@@ -16,25 +16,39 @@ void OccupiableSpace::setUnoccupied()
 }
 
 bool Passenger::occupySpace(OccupiableSpace &newSpace)
-//bool SeatSpace::occupySpace(Passenger newOccupant)
 {
 	if (newSpace.occupied)
 	{
 		return false;
+
 	}
 	else
 	{
-		//printf("I am SeatSpace %i and I am being occupied by Passenger %i\n", this->id, newOccupant.id);
-		printf("I am Passenger %i and I am occupying SeatSpace %i\n",this->id, newSpace.id);
-		//this->occupant = &newOccupant;
-		//this->occupied = true;
+		printf("I am Passenger %i and I am occupying a space with id %i\n",
+			this->id, newSpace.id);
+
+		//If this passenger is in the aisle, set its old space to unoccupied
+		this->currentSpace.setUnoccupied();
+
+		//Move to the new one
 		printf("Occupied: %s\n", newSpace.occupied ? "True" : "False");
+		this->currentSpace = newSpace;
 		newSpace.setOccupied();
 		printf("Occupied: %s\n", newSpace.occupied ? "True" : "False");
-		//newSpace.occupant = this;
 
 		return true;
 	}
+}
+
+bool Passenger::IsEqual(Passenger p)
+{
+	bool conditions = 
+		(this->id == p.id);
+		// && (this->targetRow == p.targetRow) &&
+		// (this->targetSeatInRow == p.targetSeatInRow) &&
+		// (this->stowTime == p.stowTime) &&
+		// (this->lifetime == p.lifetime);
+	return conditions;
 }
 
 bool SeatSpace::leaveSpace()
@@ -46,7 +60,6 @@ bool SeatSpace::leaveSpace()
 SeatSpace::SeatSpace(int id)
 {
 	//constructor
-	
 	this->id = id;
 	this->occupied = false;
 }
@@ -54,14 +67,12 @@ SeatSpace::SeatSpace(int id)
 SeatSpace::SeatSpace()
 {
 	//constructor
-	
 	this->occupied = false;
 }
 
 SeatGrouplet::SeatGrouplet(int numSeats, int startingId)
 {
 	//constructor
-	
 	this->numSeats = numSeats;
 	
 	//Populate seats
@@ -85,6 +96,7 @@ void CabinAisle::Populate(int numRows, int numSeatsPort, int numSeatsStbd)
 	{
 		AisleSpace newAisleSpace;
 		newAisleSpace.id = i;
+		newAisleSpace.occupied = false;
 
 		SeatGrouplet portGrouplet(numSeatsPort, 0);
 		SeatGrouplet stbdGrouplet(numSeatsStbd, numSeatsPort);
@@ -154,71 +166,4 @@ void CabinAisle::ClearAllSeats()
 			seatsMap_it->second.occupied = false;
 		}
 	}
-}
-
-//Constructor
-Airplane::Airplane()
-{
-	//nothing here
-}
-
-Airplane::Airplane(bool verbose)
-{
-	this->verboseOutput = verbose;
-}
-
-//If this were C#, this would be an extension method
-bool Airplane::CheckSomeSeats(SeatGrouplet groupletToCheck, int targetSeatId, SeatSpace &foundSpace)
-{
-	auto seatsToCheck = groupletToCheck.seatsMap;
-	std::map<int, SeatSpace>::iterator seat_it;
-	for (seat_it = seatsToCheck.begin(); seat_it != seatsToCheck.end(); seat_it++)
-	{
-		if (seat_it->second.id == targetSeatId)
-		{
-			//Found the target
-			foundSpace = seat_it->second;
-			return true;
-		}
-	}
-	//Could not find target
-	return false;
-}
-
-bool Airplane::CheckSeatsInRow(Passenger &p, int rowNumber, bool &foundSeat, bool &tookSeat)
-{
-	//get all seats at this row index
-	std::pair<SeatGrouplet, SeatGrouplet> groupletsToCheck = this->MainAisle.twoSidedSeating.at(rowNumber).second;
-	auto portSeatsGrouplet = groupletsToCheck.first;
-	auto stbdSeatsGrouplet = groupletsToCheck.second;
-	SeatSpace target;
-
-	bool foundSeatCondition = (this->CheckSomeSeats(portSeatsGrouplet, p.targetSeatInRow, target) || 
-					  		   this->CheckSomeSeats(stbdSeatsGrouplet, p.targetSeatInRow, target));
-	if (foundSeatCondition)
-	{
-		//Found the target seat
-		foundSeat = true;
-		if (verboseOutput) printf("Passenger %i found seat %i in row %i\n", p.id, p.targetSeatInRow, p.targetRow);
-
-		if (p.occupySpace(target))
-		{
-			//Passenger successfully occupies the target space
-			if (verboseOutput) printf("Passenger %i takes seat %i in row %i\n", p.id, target.id, p.targetRow);
-			tookSeat = true;
-			return true;
-		}
-		else
-		{
-			//Passenger did not occupy the target space
-			if (verboseOutput) printf("Passenger %i does not take seat %i in row %i\n", p.id, target.id, p.targetRow);
-			tookSeat = false;
-			return true;
-		}
-	}
-}
-
-void Airplane::PopulateMainAisle()
-{
-	this->MainAisle.Populate(this->NumRows, this->NumSeatsPort, this->NumSeatsStbd);
 }

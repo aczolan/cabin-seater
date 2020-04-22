@@ -1,7 +1,7 @@
-// cabin-seater.h
+// cabin.h
 
-#ifndef INCLUDE_CABIN_SEATER_H
-#define INCLUDE_CABIN_SEATER_H
+#ifndef INCLUDE_CABIN_H
+#define INCLUDE_CABIN_H
 
 #include <math.h>
 #include <map>
@@ -57,6 +57,8 @@ class Passenger
 
 		OccupiableSpace currentSpace;
 		bool occupySpace(OccupiableSpace &newSpace);
+
+		bool IsEqual(Passenger);
 };
 
 class SeatGrouplet
@@ -84,30 +86,4 @@ class CabinAisle
 
 };
 
-//Hold all global stuff
-class Airplane
-{
-	private:
-		bool verboseOutput;
-	public:
-		int NumRows;
-		int LastRowIndex;
-		int NumSeatsPort;
-		int NumSeatsStbd;
-
-		int NumPassengers;
-		int PassengerMinStowTime;
-		int PassengerMaxStowTime;
-		int PassengerIdStartingIndex;
-		CabinAisle MainAisle;
-
-		bool CheckSomeSeats(SeatGrouplet, int, SeatSpace&);
-		bool CheckSeatsInRow(Passenger&, int, bool&, bool&);
-		void PopulateMainAisle();
-
-		//Constructor
-		Airplane();
-		Airplane(bool);
-};
-
-#endif //INCLUDE_CABIN_SEATER_H
+#endif //INCLUDE_CABIN_H

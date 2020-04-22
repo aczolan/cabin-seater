@@ -2,8 +2,10 @@
 
 #include <list>
 #include <queue>
+#include <string>
 
-#include <cabin-seater.h>
+#include <cabin.h>
+#include <airplane.h>
 #include <methods.h>
 
 const int setting_NUMROWS = 3;
@@ -21,6 +23,27 @@ bool g_RunSimulation = true;
 uint64_t g_globalTimer = 0;
 //CabinAisle g_MainAisle;
 SimulatorState g_SimState;
+
+void PrintQueue(std::queue<Passenger> q)
+{
+	int index = 0;
+	if (!q.empty())
+	{
+		printf("Passenger Queue:\n");
+	}
+	else
+	{
+		printf("The queue is empty.\n");
+	}
+	while(!q.empty())
+	{
+		Passenger p = q.front();
+		printf("%i : ID %i TargetRow %i TargetSeat %i\n", index, p.id, p.targetRow, p.targetSeatInRow);
+
+		q.pop();
+		index++;
+	}
+}
 
 int main()
 {
@@ -55,13 +78,17 @@ int main()
 	//Populate passenger list
 	//Select a queueing algorithm
 	createPassengers_BackToFront_NonRandom(SimAirplane, allPassengers, passengersQueue);
+	PrintQueue(passengersQueue);
+	PrintQueue(passengersQueue);
 	
 	//Iterate over all passengers and have them step forward
 	int numPassengersFinished = 0;
+
 	while (g_RunSimulation)
 	{
 		g_globalTimer++;
-		if (setting_Verbose) printf("| TIME: %i |\n", g_globalTimer);
+		bool passengerDequeuedThisTurn = false;
+		if (setting_Verbose) printf("| TIME: %lu |\n", g_globalTimer);
 
 		//Iterate over all passengers and modify their states/position as needed
 		for (std::list<Passenger>::iterator p_it = allPassengers.begin(); p_it != allPassengers.end(); p_it++)
@@ -74,8 +101,15 @@ int main()
 
 			p_it->lifetime++;
 
-			if (p_it->state == PassengerState::IN_QUEUE)
+			if (p_it->state == PassengerState::IN_QUEUE && !passengerDequeuedThisTurn)
 			{
+				printf("Front of queue passenger: %i\n", passengersQueue.front().id);
+				if ( !(passengersQueue.front().IsEqual(*p_it)) )
+				{
+					//Do not move this passenger, since they are not at the front of the queue
+					continue;
+				}
+
 				//Move to the aisle's first space if it is unoccupied
 				auto firstSpace = SimAirplane.MainAisle.twoSidedSeating.begin()->second.first;
 				if (!firstSpace.occupied)
@@ -84,8 +118,10 @@ int main()
 					if (p_it->occupySpace(firstSpace))
 					{
 						firstSpace.setOccupied();
+						passengersQueue.pop();
 						p_it->state = PassengerState::IN_AISLE;
 						if (setting_Verbose) printf("Passenger %i: Entered aisle at space %i\n", p_it->id, p_it->currentSpace.id);
+						passengerDequeuedThisTurn = true;
 					}
 					else
 					{
@@ -97,6 +133,7 @@ int main()
 				else
 				{
 					//Stay in queue
+					if (setting_Verbose) printf("Passenger %i: Staying in queue (First aisle space is occupied)\n", p_it->id);
 				}
 			}
 			else if (p_it->state == PassengerState::IN_AISLE)
@@ -164,7 +201,7 @@ int main()
 			break;
 		}
 	}
-	
+
 	//All done!
 	//Print the aisle's contents
 	printf("FINAL AISLE CONTENTS:\n");

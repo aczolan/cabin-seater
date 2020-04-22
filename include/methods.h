@@ -6,7 +6,8 @@
 #include <list>
 #include <queue>
 
-#include <cabin-seater.h>
+#include <cabin.h>
+#include <airplane.h>
 
 int randInt(int lower, int upper)
 {
