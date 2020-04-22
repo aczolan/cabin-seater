@@ -14,4 +14,9 @@ bool appendLineToFile(std::string filepath, std::string line)
     return true;
 }
 
+bool isEven(int x)
+{
+	return ( (x % 2 == 0) || (x == 0) );
+}
+
 #endif

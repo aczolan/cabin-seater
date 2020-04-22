@@ -30,20 +30,33 @@ SimulatorState g_SimState;
 
 bool PopulatePassengerList(int queueingAlgorithm, Airplane plane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
 {
-	//0: BackToFrontNonRandom
-	//1: FrontToBackNonRandom
-	//2: Random
+	//1: BackToFrontNonRandom
+	//2: FrontToBackNonRandom
+	//3: Random
+	//4: Window-Middle-Aisle
+	//5: Steffen Perfect
+	//6: Steffen Modified
 
 	switch(queueingAlgorithm)
 	{
-		case 0:
+		case 1:
 			createPassengers_BackToFront_NonRandom(plane, pAll, pQueue);
 			return true;
-		case 1:
+		case 2:
 			createPassengers_FrontToBack_NonRandom(plane, pAll, pQueue);
 			return true;
-
-
+		case 3:
+			createPassengers_Random(plane, pAll, pQueue);
+			return true;
+		case 4:
+			createPassengers_WindowMiddleAisle(plane, pAll, pQueue);
+			return true;
+		case 5:
+			createPassengers_SteffenPerfect(plane, pAll, pQueue);
+			return true;
+		case 6:
+			createPassengers_SteffenModified(plane, pAll, pQueue);
+			return true;
 		default:
 			return false;
 	}
@@ -142,7 +155,7 @@ int main(int argc, char *argv[])
 		//Wrong number of args
 		printf("Incorrect number of args. Expected %i, got %i\n",
 			   numExpectedArgs, argc);
-		return 0;
+		return 1;
 		//exit
 	}
 
@@ -193,7 +206,7 @@ int main(int argc, char *argv[])
 	{
 		//Error creating passengers
 		printf("Error creating passengers using algorithm %i.\n", SimAirplane.SelectedAlgorithmID);
-		return 0;
+		return 1;
 		//exit
 	}
 
