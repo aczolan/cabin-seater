@@ -153,30 +153,77 @@ void createPassengers_Random(Airplane simAirplane, std::list<Passenger> &pAll, s
 
 void createPassengers_WindowMiddleAisle(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
 {
-	std::vector<int> indexesAssignmentOrder;
+	//Create a lists for window, middle, and aisle seats
+	//For now, we assume that:
+		//Port Window: 0
+		//Port Middle: Window + 1
+		//Port Aisle: Window + 2
+		//etc..
+		//Stbd Window: Max Seat Index
+		//Stbd Middle: Window - 1
+		//Stbd Aisle: Window - 2
+		//etc..
+	//This algorithm also covers the case where there are more than three seats per grouplet
 
-	//Get window seat indexes
-	//Port side: we can assume that the window seat is index 0
+	std::queue< std::vector< std::pair<int, int> > > allBoardingGroups;
+
 	int portWindowIndex = 0;
-	//Stbd side: numPortSeats + numStbdSeats - 1
 	int stbdWindowIndex = simAirplane.NumSeatsPort + simAirplane.NumSeatsStbd - 1;
+	int rowHalfwayIndex = stbdWindowIndex / 2;
 
-	indexesAssignmentOrder.push_back(portWindowIndex); //Port window
-	indexesAssignmentOrder.push_back(stbdWindowIndex); //Stbd window
-
-	int seatsPerRow = simAirplane.NumSeatsPort + simAirplane.NumSeatsStbd;
-	for (int i = 0; i < seatsPerRow / 2; i++)
+	for (int indexesFromWindow = 0; indexesFromWindow < rowHalfwayIndex; indexesFromWindow++)
 	{
-		//i = number of seats away from the window seat
-		int assignedSeatPort = portWindowIndex + i;
-		int assignedSeatStbd = stbdWindowIndex - i;
+		std::vector< std::pair<int, int> > thisBoardingGroup;
 
-		//Iterate over all rows
-		for (int row = 0; row < simAirplane.NumRows; row++)
+		for (int rowNumber = 0; rowNumber < simAirplane.NumRows; rowNumber++)
 		{
-			//Create a passenger at this row & seat
+			//Add the seat on the port side
+			auto portSeat = std::make_pair(rowNumber, portWindowIndex + indexesFromWindow);
+			thisBoardingGroup.push_back(portSeat);
+
+			//Add the seat on the stbd side
+			auto stbdSeat = std::make_pair(rowNumber, stbdWindowIndex - indexesFromWindow);
+			thisBoardingGroup.push_back(stbdSeat);
+		}
+
+		allBoardingGroups.push(thisBoardingGroup);
+	}
+
+	//Assign seats within boarding groups randomly
+	int numAssignedPassengers = 0;
+	int pCurrentIndex = 0;
+	int pStartingIndex = simAirplane.PassengerIdStartingIndex;
+	int pEndingIndex = simAirplane.PassengerIdStartingIndex + simAirplane.NumPassengers;
+
+	while(!allBoardingGroups.empty() && numAssignedPassengers <= simAirplane.NumPassengers)
+	{
+		auto thisBoardingGroup = allBoardingGroups.front();
+		allBoardingGroups.pop();
+		//Randomly assign seats from this group
+		while (!thisBoardingGroup.empty() && numAssignedPassengers <= simAirplane.NumPassengers)
+		{
+			//Randomly select an entry in the vector
+			int vecMin = 0;
+			int vecMax = thisBoardingGroup.size();
+			int randIndex = randInt(vecMin, vecMax);
+			std::pair<int, int> selectedSeat = thisBoardingGroup[randIndex];
+
+			Passenger p = createPassenger(pCurrentIndex, selectedSeat.first, selectedSeat.second, 
+										  simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);
+			pAll.push_back(p);
+			pQueue.push(p);
+
+			if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);
+
+			numAssignedPassengers++;
+			pCurrentIndex++;
+
+			//Remove this entry from the selectable seats vector
+			thisBoardingGroup.erase(thisBoardingGroup.begin() + randIndex);
 		}
 	}
+
+	if (simAirplane.verboseOutput) printf("Created %i passengers with Random.\n", numAssignedPassengers);
 }
 
 void createPassengers_SteffenPerfect(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)

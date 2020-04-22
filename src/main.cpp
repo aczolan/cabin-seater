@@ -130,7 +130,7 @@ int main(int argc, char *argv[])
 	//Initialize an AirplaneSettings object and fill it with all our settings
 	Airplane SimAirplane(setting_Verbose);
 	SimAirplane.NumRows = setting_NUMROWS;
-	SimAirplane.LastRowIndex = setting_LASTROWINDEX;
+	SimAirplane.LastRowIndex = SimAirplane.NumRows - 1;
 	SimAirplane.NumSeatsPort = setting_NUMSEATS_PORT;
 	SimAirplane.NumSeatsStbd = setting_NUMSEATS_STBD;
 	SimAirplane.NumPassengers = setting_NUMPASSENGERS;
@@ -177,6 +177,7 @@ int main(int argc, char *argv[])
 	SimAirplane.PassengerMaxStowTime = std::atoi(ArgsList[5]);
 	SimAirplane.NumPassengers = std::atoi(ArgsList[6]);
 	SimAirplane.NumRows = std::atoi(ArgsList[7]);
+	SimAirplane.LastRowIndex = SimAirplane.NumRows - 1;
 
 	if (setting_Verbose) printf("ArgsList Contents:\n");
 	for (int i = 0; i < argc; i++)
