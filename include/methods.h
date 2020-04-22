@@ -37,6 +37,7 @@ void createPassengers_BackToFront_NonRandom(Airplane simAirplane, std::list<Pass
 	int assignedSeat = 0;
 	int pStartingIndex = simAirplane.PassengerIdStartingIndex;
 	int pEndingIndex = simAirplane.PassengerIdStartingIndex + simAirplane.NumPassengers;
+	int numAssignedPassengers = 0;
 
 	for (int i = pStartingIndex; i < pEndingIndex; i++)
 	{
@@ -47,6 +48,7 @@ void createPassengers_BackToFront_NonRandom(Airplane simAirplane, std::list<Pass
 		pQueue.push(p);
 
 		if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);
+		numAssignedPassengers++;
 
 		//Increment next assigned seat for the next passenger
 		assignedSeat++;
@@ -65,6 +67,8 @@ void createPassengers_BackToFront_NonRandom(Airplane simAirplane, std::list<Pass
 			}
 		}
 	}
+
+	if (simAirplane.verboseOutput) printf("Created %i passengers with Back-to-Front.\n", numAssignedPassengers);
 }
 
 void createPassengers_FrontToBack_NonRandom(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
@@ -78,6 +82,7 @@ void createPassengers_FrontToBack_NonRandom(Airplane simAirplane, std::list<Pass
 	int assignedSeat = 0;
 	int pStartingIndex = simAirplane.PassengerIdStartingIndex;
 	int pEndingIndex = simAirplane.PassengerIdStartingIndex + simAirplane.NumPassengers;
+	int numAssignedPassengers = 0;
 
 	for (int i = pStartingIndex; i < pEndingIndex; i++)
 	{
@@ -88,6 +93,7 @@ void createPassengers_FrontToBack_NonRandom(Airplane simAirplane, std::list<Pass
 		pQueue.push(p);
 
 		if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);
+		numAssignedPassengers++;
 
 		//Increment next assigned seat for the next passenger
 		assignedSeat++;
@@ -106,6 +112,8 @@ void createPassengers_FrontToBack_NonRandom(Airplane simAirplane, std::list<Pass
 			}
 		}
 	}
+
+	if (simAirplane.verboseOutput) printf("Created %i passengers with Front-to-Back.\n", numAssignedPassengers);
 }
 
 void createPassengers_Random(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
@@ -223,11 +231,86 @@ void createPassengers_WindowMiddleAisle(Airplane simAirplane, std::list<Passenge
 		}
 	}
 
-	if (simAirplane.verboseOutput) printf("Created %i passengers with Random.\n", numAssignedPassengers);
+	if (simAirplane.verboseOutput) printf("Created %i passengers with Window-Middle-Aisle.\n", numAssignedPassengers);
 }
 
 void createPassengers_SteffenPerfect(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
 {
+	std::queue< std::pair<int, int> > seatAssignmentQueue;
+
+	int portWindowIndex = 0;
+	int stbdWindowIndex = simAirplane.NumSeatsPort + simAirplane.NumSeatsStbd - 1;
+	int rowHalfwayIndex = stbdWindowIndex / 2;
+
+	for (int indexesFromWindow = 0; indexesFromWindow < rowHalfwayIndex; indexesFromWindow++)
+	{
+		//Starting from the back of the cabin...
+
+		//Select even seats on the port side
+		for (int rowIndex = simAirplane.NumRows - 1; rowIndex >= 0; --rowIndex)
+		{
+			if (isEven(rowIndex))
+			{
+				auto thisSeat = std::make_pair(rowIndex, portWindowIndex + indexesFromWindow);
+				seatAssignmentQueue.push(thisSeat);
+			}
+		}
+
+		//Select even seats on the starboard side
+		for (int rowIndex = simAirplane.NumRows - 1; rowIndex >= 0; --rowIndex)
+		{
+			if (isEven(rowIndex))
+			{
+				auto thisSeat = std::make_pair(rowIndex, stbdWindowIndex - indexesFromWindow);
+				seatAssignmentQueue.push(thisSeat);
+			}
+		}
+
+		//Select odd seats on the port side
+		for (int rowIndex = simAirplane.NumRows - 1; rowIndex >= 0; --rowIndex)
+		{
+			if (!isEven(rowIndex))
+			{
+				auto thisSeat = std::make_pair(rowIndex, portWindowIndex + indexesFromWindow);
+				seatAssignmentQueue.push(thisSeat);
+			}
+		}
+
+		//Select odd seats on the starboard side
+		for (int rowIndex = simAirplane.NumRows - 1; rowIndex >= 0; --rowIndex)
+		{
+			if (!isEven(rowIndex))
+			{
+				auto thisSeat = std::make_pair(rowIndex, stbdWindowIndex - indexesFromWindow);
+				seatAssignmentQueue.push(thisSeat);
+			}
+		}
+	}
+
+	//Assign passengers one-to-one with entries in the seat queue
+	int numAssignedPassengers = 0;
+	int pCurrentIndex = 0;
+	int pStartingIndex = simAirplane.PassengerIdStartingIndex;
+	int pEndingIndex = simAirplane.PassengerIdStartingIndex + simAirplane.NumPassengers;
+
+	while (!seatAssignmentQueue.empty() && numAssignedPassengers <= simAirplane.NumPassengers)
+	{
+		auto nextSeat = seatAssignmentQueue.front();
+		seatAssignmentQueue.pop();
+
+		Passenger p = createPassenger(pCurrentIndex, nextSeat.first, nextSeat.second,
+									  simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);
+
+		pAll.push_back(p);
+		pQueue.push(p);
+
+		if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);
+
+		numAssignedPassengers++;
+		pCurrentIndex++;
+	}
+
+	if (simAirplane.verboseOutput) printf("Created %i passengers with Steffen Perfect.\n", numAssignedPassengers);
 
 }
 
