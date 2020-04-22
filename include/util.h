@@ -14,6 +14,13 @@ bool appendLineToFile(std::string filepath, std::string line)
     return true;
 }
 
+int randInt(int lower, int upper)
+{
+	//srand(time(NULL));
+	//return rand() % upper + lower;
+	return ( rand() % upper ) + lower;
+}
+
 bool isEven(int x)
 {
 	return ( (x % 2 == 0) || (x == 0) );

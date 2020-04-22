@@ -4,6 +4,7 @@
 #define INCLUDE_METHODS_H
 
 #include <list>
+#include <map>
 #include <queue>
 #include <vector>
 
@@ -12,13 +13,6 @@
 #include <util.h>
 
 #include <ctime>
-
-int randInt(int lower, int upper)
-{
-	//srand(time(NULL));
-	//return rand() % upper + lower;
-	return ( rand() % upper ) + lower;
-}
 
 Passenger createPassenger(int id, int targetRow, int targetSeat, int stowTimeMin, int stowTimeMax)
 {
@@ -73,8 +67,6 @@ void createPassengers_BackToFront_NonRandom(Airplane simAirplane, std::list<Pass
 	}
 }
 
-//void createPassengers_BackToFront_Random(std::list<Passenger>, std::queue<Passenger>, int, int, int);
-
 void createPassengers_FrontToBack_NonRandom(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
 {
 	//Add passengers to the queue in order of seat location from the front of the cabin
@@ -115,11 +107,48 @@ void createPassengers_FrontToBack_NonRandom(Airplane simAirplane, std::list<Pass
 		}
 	}
 }
-//void createPassengers_FrontToBack_Random(std::list<Passenger>, std::queue<Passenger>, int, int, int);
 
 void createPassengers_Random(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
 {
+	//Create list of all selectable seats
+	std::vector<std::pair<int, int>> SelectableSeats;
+	//Iterate over all seats and fill the list
+	for (int i = 0; i <= simAirplane.NumRows - 1; i++)
+	{
+		for (int j = 0; j <= simAirplane.NumSeatsPort + simAirplane.NumSeatsStbd - 1; j++)
+		{
+			auto seatPair = std::make_pair(i, j);
+			SelectableSeats.push_back(seatPair);
+		}
+	}
 
+	int numAssignedPassengers = 0;
+	int pCurrentIndex = 0;
+	int pStartingIndex = simAirplane.PassengerIdStartingIndex;
+	int pEndingIndex = simAirplane.PassengerIdStartingIndex + simAirplane.NumPassengers;
+
+	while (!SelectableSeats.empty() && numAssignedPassengers <= simAirplane.NumPassengers)
+	{
+		//Randomly select an entry in the vector
+		int vecMin = 0;
+		int vecMax = SelectableSeats.size();
+		int randIndex = randInt(vecMin, vecMax);
+		std::pair<int, int> selectedSeat = SelectableSeats[randIndex];
+
+		Passenger p = createPassenger(pCurrentIndex, selectedSeat.first, selectedSeat.second, 
+									  simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);
+		pAll.push_back(p);
+		pQueue.push(p);
+
+		if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);
+
+		numAssignedPassengers++;
+		pCurrentIndex++;
+		//Remove this entry from the selectable seats vector
+		SelectableSeats.erase(SelectableSeats.begin() + randIndex);
+	}
+
+	if (simAirplane.verboseOutput) printf("Created %i passengers with Random.\n", numAssignedPassengers);
 }
 
 void createPassengers_WindowMiddleAisle(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
@@ -157,21 +186,6 @@ void createPassengers_SteffenPerfect(Airplane simAirplane, std::list<Passenger> 
 
 void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
 {
-	//Start at the back of the cabin
-	// std::vector<int> evenRowNumbers;
-	// std::vector<int> oddRowNumbers;
-	// for (int i = simAirplane.NumRows - 1; i > 0; i--)
-	// {
-	// 	if (isEven(i))
-	// 	{
-	// 		evenRowNumbers.push_back(i);
-	// 	}
-	// 	else
-	// 	{
-	// 		oddRowNumbers.push_back(i);
-	// 	}
-	// }
-
 	//Assign seats to passengers
 	int maxSeatId = simAirplane.NumSeatsPort + simAirplane.NumSeatsStbd - 1;
 	int numAssignedPassengers = 0;
