@@ -3,6 +3,7 @@
 #include <list>
 #include <queue>
 #include <string>
+#include <vector>
 
 #include <cabin.h>
 #include <airplane.h>
@@ -59,7 +60,39 @@ void PrintPassengersList(std::list<Passenger> pList)
 	}
 }
 
-int main()
+// //Get command line arguments
+// bool ParseArgs(int argc, char* argv[], Airplane simAirplane)
+// {
+// 	int numExpectedArgs = 7;
+// 	//argv[0] = program name
+// 	//argv[1] = csv to append to
+// 	//argv[2] = queueing algorithm id
+// 	//argv[3] = min stow time
+// 	//argv[4] = max stow time
+// 	//argv[5] = num passengers
+// 	//argv[6] = num rows
+
+// 	//todo:
+// 	//argv[7] = num seats port
+// 	//argv[8] = num seats stbd
+
+// 	if (argc != numExpectedArgs)
+// 	{
+// 		//Wrong number of args
+// 		printf("Incorrect number of args. Expected %i, got %i\n",
+// 			   numExpectedArgs, argc);
+// 		return false;
+// 	}
+
+// 	simAirplane.CSVname = std::stoi(argv[1]);
+// 	simAirplane.SelectedAlgorithmID = std::stoi(argv[2]);
+// 	simAirplane.PassengerMinStowTime = std::stoi(argv[3]);
+// 	simAirplane.PassengerMaxStowTime = std::stoi(argv[4]);
+// 	simAirplane.NumPassengers = std::stoi(argv[5]);
+// 	simAirplane.NumRows = std::stoi(argv[6]);
+// }
+
+int main(int argc, char *argv[])
 {
 	srand(time(NULL));
 	g_SimState = SimulatorState::RUN;
@@ -74,8 +107,26 @@ int main()
 	SimAirplane.PassengerMinStowTime = setting_PASSENGER_MINSTOWTIME;
 	SimAirplane.PassengerMaxStowTime = setting_PASSENGER_MAXSTOWTIME;
 	SimAirplane.PassengerIdStartingIndex = setting_PASSENGERS_STARTING_INDEX;
-	//SimAirplane.MainAisle;
+	SimAirplane.MainAisle;
 
+	//Get command line arguments and set members of SimAirplane
+	int numExpectedArgs = 7;
+	if (argc != numExpectedArgs)
+	{
+		//Wrong number of args
+		printf("Incorrect number of args. Expected %i, got %i\n",
+			   numExpectedArgs, argc);
+		return 0;
+		//exit
+	}
+
+	std::vector<std::string> argList(argv, argv + argc);
+	SimAirplane.CSVname = std::atoi(argList[1].c_str());
+	SimAirplane.SelectedAlgorithmID = std::atoi(argList[2].c_str());
+	SimAirplane.PassengerMinStowTime = std::atoi(argList[3].c_str());
+	SimAirplane.PassengerMaxStowTime = std::atoi(argList[4].c_str());
+	SimAirplane.NumPassengers = std::atoi(argList[5].c_str());
+	SimAirplane.NumRows = std::atoi(argList[6].c_str());
 
 	//Populate the main aisle
 	SimAirplane.PopulateMainAisle();

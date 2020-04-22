@@ -1,5 +1,7 @@
 // airplane.h
 
+#include <string>
+
 #ifndef INCLUDE_AIRPLANE_H
 #define INCLUDE_AIRPLANE_H
 
@@ -8,6 +10,9 @@ class Airplane
 	private:
 		bool verboseOutput;
 	public:
+		std::string CSVname;
+		int SelectedAlgorithmID;
+
 		int NumRows;
 		int LastRowIndex;
 		int NumSeatsPort;
