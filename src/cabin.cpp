@@ -8,11 +8,13 @@
 void OccupiableSpace::setOccupied()
 {
 	this->occupied = true;
+	printf("Update to OcSpace %i: Occupied=%s\n", this->id, this->occupied ? "True" : "False");
 }
 
 void OccupiableSpace::setUnoccupied()
 {
 	this->occupied = false;
+	printf("Update to OcSpace %i: Occupied=%s\n", this->id, this->occupied ? "True" : "False");
 }
 
 bool Passenger::occupySpace(OccupiableSpace &newSpace)
@@ -40,7 +42,7 @@ bool Passenger::occupySpace(OccupiableSpace &newSpace)
 	}
 }
 
-bool Passenger::CheckCurrentRow()
+bool Passenger::CurrentRowIsTarget()
 {
 	return (this->targetRow == this->currentSpace.id);
 }
@@ -133,13 +135,13 @@ void CabinAisle::PrintAisle()
 		printf("Port Seats:\n");
 		for (int i = portFirstId; i < portFirstId + numSeatsPort; i++)
 		{
-			auto seat = a_it->second.second.first.seatsMap[i];
+			auto seat = a_it->second.second.first.seatsMap.at(i);
 			printf("\tSeat %i: Occupied: %s\n", seat.id, seat.occupied ? "True" : "False");
 		}
 		printf("Starboard Seats:\n");
 		for (int i = stbdFirstId; i < stbdFirstId + numSeatsStbd; i++)
 		{
-			auto seat = a_it-> second.second.second.seatsMap[i];
+			auto seat = a_it-> second.second.second.seatsMap.at(i);
 			printf("\tSeat %i: Occupied: %s\n", seat.id, seat.occupied ? "True" : "False");
 		}
 	}
@@ -169,6 +171,101 @@ void CabinAisle::ClearAllSeats()
 		{
 			//Clear this seat
 			seatsMap_it->second.occupied = false;
+		}
+	}
+}
+
+void CabinAisle::SetSeatOccupied(int rowNumber, int seatNumber)
+{
+	auto portAndStbdGrouplets = this->twoSidedSeating.at(rowNumber).second;
+	auto portGroupletMap = portAndStbdGrouplets.first.seatsMap;
+	auto stbdGroupletMap = portAndStbdGrouplets.second.seatsMap;
+
+	//Find seat in this row
+	//Iterate over the port seats
+	std::map<int, SeatSpace>::iterator m_it;
+	for (m_it = portGroupletMap.begin(); m_it != portGroupletMap.end(); m_it++)
+	{
+		if ( (m_it->first == seatNumber) && (m_it->second.id == seatNumber) )
+		{
+			//This is the seat
+			//Do the full call for now
+			this->twoSidedSeating.at(rowNumber).second.first.seatsMap.at(seatNumber).occupied = true;
+		}
+	}
+
+	//Iterate over the stbd seats
+	for (m_it = stbdGroupletMap.begin(); m_it != stbdGroupletMap.end(); m_it++)
+	{
+		if ( (m_it->first == seatNumber) && (m_it->second.id == seatNumber) )
+		{
+			//This is the seat
+			//Do the full call for now
+			this->twoSidedSeating.at(rowNumber).second.second.seatsMap.at(seatNumber).occupied = true;
+		}
+	}
+
+	//If we've gotten there and haven't set the seat to occupied then idk
+}
+
+void CabinAisle::SetSeatUnoccupied(int rowNumber, int seatNumber)
+{
+	auto portAndStbdGrouplets = this->twoSidedSeating.at(rowNumber).second;
+	auto portGroupletMap = portAndStbdGrouplets.first.seatsMap;
+	auto stbdGroupletMap = portAndStbdGrouplets.second.seatsMap;
+
+	//Find seat in this row
+	//Iterate over the port seats
+	std::map<int, SeatSpace>::iterator m_it;
+	for (m_it = portGroupletMap.begin(); m_it != portGroupletMap.end(); m_it++)
+	{
+		if ( (m_it->first == seatNumber) && (m_it->second.id == seatNumber) )
+		{
+			//This is the seat
+			//Do the full call for now
+			this->twoSidedSeating.at(rowNumber).second.first.seatsMap.at(seatNumber).occupied = false;
+		}
+	}
+
+	//Iterate over the stbd seats
+	for (m_it = stbdGroupletMap.begin(); m_it != stbdGroupletMap.end(); m_it++)
+	{
+		if ( (m_it->first == seatNumber) && (m_it->second.id == seatNumber) )
+		{
+			//This is the seat
+			//Do the full call for now
+			this->twoSidedSeating.at(rowNumber).second.second.seatsMap.at(seatNumber).occupied = false;
+		}
+	}
+
+	//If we've gotten there and haven't set the seat to unoccupied then idk
+}
+
+//For testing only
+void CabinAisle::FillAllSeats()
+{
+		std::map<int, std::pair<AisleSpace, std::pair<SeatGrouplet, SeatGrouplet>>>::iterator a_it;
+	for (a_it = this->twoSidedSeating.begin(); a_it != this->twoSidedSeating.end(); a_it++)
+	{
+		//Get port and starboard seats in this row
+		SeatGrouplet portSeatsGrouplet = a_it->second.second.first;
+		auto portSeatsMap = portSeatsGrouplet.seatsMap;
+		SeatGrouplet stbdSeatsGrouplet = a_it->second.second.second;
+		auto stbdSeatsMap = stbdSeatsGrouplet.seatsMap;
+
+		//Clear seats in the port grouplet
+		std::map<int, SeatSpace>::iterator seatsMap_it;
+		for (seatsMap_it = portSeatsMap.begin(); seatsMap_it != portSeatsMap.end(); seatsMap_it++)
+		{
+			//Clear this seat
+			seatsMap_it->second.occupied = true;
+		}
+
+		//Clear seats in the starboard grouplet
+		for (seatsMap_it = stbdSeatsMap.begin(); seatsMap_it != stbdSeatsMap.end(); seatsMap_it++)
+		{
+			//Clear this seat
+			seatsMap_it->second.occupied = true;
 		}
 	}
 }

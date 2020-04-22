@@ -143,7 +143,7 @@ int main()
 											p_it->targetRow, p_it->targetSeatInRow);
 
 				//Check to see if the passenger has reached its target row
-				if (p_it->CheckCurrentRow())
+				if (p_it->CurrentRowIsTarget())
 				{
 					//Passenger has reached its target row!
 
@@ -162,6 +162,7 @@ int main()
 						if (tookSeat)
 						{
 							if (setting_Verbose) printf("Passenger %i found its seat!\n", p_it->id);
+							SimAirplane.MainAisle.SetSeatOccupied(p_it->targetRow, p_it->targetSeatInRow);
 							p_it->state = PassengerState::SATISFIED;
 							numPassengersFinished++;
 						}
@@ -240,5 +241,13 @@ int main()
 	printf("FINAL AISLE CONTENTS:\n");
 	//printAisleContents(SimAirplane.MainAisle);
 	SimAirplane.MainAisle.PrintAisle();
+
+	SimAirplane.MainAisle.FillAllSeats();
+	SimAirplane.MainAisle.PrintAisle();
+	printf("Seat 2-2: %s\n", 
+			SimAirplane.MainAisle.twoSidedSeating.at(2).second.first.seatsMap.at(2).occupied ? "Occupied" : "NOT Occupuied");
+	SimAirplane.MainAisle.twoSidedSeating.at(2).second.first.seatsMap.at(2).occupied = true;
+	printf("Seat 2-2: %s\n", 
+			SimAirplane.MainAisle.twoSidedSeating.at(2).second.first.seatsMap.at(2).occupied ? "Occupied" : "NOT Occupuied");
 	printf("Done.\n");
 }

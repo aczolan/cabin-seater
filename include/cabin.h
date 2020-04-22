@@ -57,7 +57,7 @@ class Passenger
 
 		OccupiableSpace currentSpace;
 		bool occupySpace(OccupiableSpace &newSpace);
-		bool CheckCurrentRow();
+		bool CurrentRowIsTarget();
 
 		bool IsEqual(Passenger);
 };
@@ -84,6 +84,10 @@ class CabinAisle
 		void Populate(int, int, int);
 		void PrintAisle();
 		void ClearAllSeats();
+
+		void SetSeatOccupied(int, int);
+		void SetSeatUnoccupied(int, int);
+		void FillAllSeats(); //Set all seats to occupied. For testing only
 
 };
 
