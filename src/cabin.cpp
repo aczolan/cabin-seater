@@ -8,54 +8,13 @@
 void OccupiableSpace::setOccupied()
 {
 	this->occupied = true;
-	printf("Update to OcSpace %i: Occupied=%s\n", this->id, this->occupied ? "True" : "False");
+	//printf("Update to OcSpace %i: Occupied=%s\n", this->id, this->occupied ? "True" : "False");
 }
 
 void OccupiableSpace::setUnoccupied()
 {
 	this->occupied = false;
-	printf("Update to OcSpace %i: Occupied=%s\n", this->id, this->occupied ? "True" : "False");
-}
-
-bool Passenger::occupySpace(OccupiableSpace &newSpace)
-{
-	if (newSpace.occupied)
-	{
-		return false;
-
-	}
-	else
-	{
-		printf("I am Passenger %i and I am occupying a space with id %i\n",
-			this->id, newSpace.id);
-
-		//If this passenger is in the aisle, set its old space to unoccupied
-		this->currentSpace.setUnoccupied();
-
-		//Move to the new one
-		printf("Occupied: %s\n", newSpace.occupied ? "True" : "False");
-		this->currentSpace = newSpace;
-		newSpace.setOccupied();
-		printf("Occupied: %s\n", newSpace.occupied ? "True" : "False");
-
-		return true;
-	}
-}
-
-bool Passenger::CurrentRowIsTarget()
-{
-	return (this->targetRow == this->currentSpace.id);
-}
-
-bool Passenger::IsEqual(Passenger p)
-{
-	bool conditions = 
-		(this->id == p.id);
-		// && (this->targetRow == p.targetRow) &&
-		// (this->targetSeatInRow == p.targetSeatInRow) &&
-		// (this->stowTime == p.stowTime) &&
-		// (this->lifetime == p.lifetime);
-	return conditions;
+	//printf("Update to OcSpace %i: Occupied=%s\n", this->id, this->occupied ? "True" : "False");
 }
 
 bool SeatSpace::leaveSpace()
@@ -95,6 +54,53 @@ SeatGrouplet::SeatGrouplet()
 {
 	//constructor
 	//do something here
+}
+
+bool Passenger::occupySpace(OccupiableSpace &newSpace)
+{
+	if (newSpace.occupied)
+	{
+		return false;
+
+	}
+	else
+	{
+		//printf("I am Passenger %i and I am occupying a space with id %i\n",
+		//this->id, newSpace.id);
+
+		//If this passenger is in the aisle, set its old space to unoccupied
+		this->currentSpace.setUnoccupied();
+
+		//Move to the new one
+		//printf("Occupied: %s\n", newSpace.occupied ? "True" : "False");
+		this->currentSpace = newSpace;
+		newSpace.setOccupied();
+		//printf("Occupied: %s\n", newSpace.occupied ? "True" : "False");
+
+		return true;
+	}
+}
+
+bool Passenger::CurrentRowIsTarget()
+{
+	return (this->targetRow == this->currentSpace.id);
+}
+
+bool Passenger::IsEqual(Passenger p)
+{
+	bool conditions = 
+		(this->id == p.id);
+		// && (this->targetRow == p.targetRow) &&
+		// (this->targetSeatInRow == p.targetSeatInRow) &&
+		// (this->stowTime == p.stowTime) &&
+		// (this->lifetime == p.lifetime);
+	return conditions;
+}
+
+Passenger::Passenger()
+{
+	//Constructor
+	this->lifetime = 0;
 }
 
 void CabinAisle::Populate(int numRows, int numSeatsPort, int numSeatsStbd)
@@ -239,6 +245,36 @@ void CabinAisle::SetSeatUnoccupied(int rowNumber, int seatNumber)
 	}
 
 	//If we've gotten there and haven't set the seat to unoccupied then idk
+}
+
+void CabinAisle::SetAisleSpaceOccupied(int aisleSpaceId)
+{
+	//Find the aisle space to modify
+	std::map<int, std::pair<AisleSpace, std::pair<SeatGrouplet, SeatGrouplet>>>::iterator m_it;
+	for (m_it = this->twoSidedSeating.begin(); m_it != this->twoSidedSeating.end(); m_it++)
+	{
+		if ( (m_it->first == aisleSpaceId) && (m_it->second.first.id == aisleSpaceId) )
+		{
+			//Set this space to Occupied
+			//Do the full call for now
+			this->twoSidedSeating.at(aisleSpaceId).first.occupied = true;
+		}
+	}
+}
+
+void CabinAisle::SetAisleSpaceUnoccupied(int aisleSpaceId)
+{
+	//Find the aisle space to modify
+	std::map<int, std::pair<AisleSpace, std::pair<SeatGrouplet, SeatGrouplet>>>::iterator m_it;
+	for (m_it = this->twoSidedSeating.begin(); m_it != this->twoSidedSeating.end(); m_it++)
+	{
+		if ( (m_it->first == aisleSpaceId) && (m_it->second.first.id == aisleSpaceId) )
+		{
+			//Set this space to Occupied
+			//Do the full call for now
+			this->twoSidedSeating.at(aisleSpaceId).first.occupied = false;
+		}
+	}
 }
 
 //For testing only

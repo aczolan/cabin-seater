@@ -9,15 +9,13 @@
 #include <cabin.h>
 #include <airplane.h>
 
+#include <ctime>
+
 int randInt(int lower, int upper)
 {
-	srand(time(NULL));
-	return rand() % upper + lower;
-}
-
-int coolThing(int a, int b)
-{
-	return a + b;
+	//srand(time(NULL));
+	//return rand() % upper + lower;
+	return ( rand() % upper ) + lower;
 }
 
 void createPassengers_BackToFront_NonRandom(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)

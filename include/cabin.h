@@ -60,6 +60,8 @@ class Passenger
 		bool CurrentRowIsTarget();
 
 		bool IsEqual(Passenger);
+
+		Passenger();
 };
 
 class SeatGrouplet
@@ -85,8 +87,12 @@ class CabinAisle
 		void PrintAisle();
 		void ClearAllSeats();
 
+		//Desperation methods
 		void SetSeatOccupied(int, int);
 		void SetSeatUnoccupied(int, int);
+		void SetAisleSpaceOccupied(int);
+		void SetAisleSpaceUnoccupied(int);
+
 		void FillAllSeats(); //Set all seats to occupied. For testing only
 
 };
