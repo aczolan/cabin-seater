@@ -50,6 +50,7 @@ class Passenger
 		int id;
 		int targetRow;
 		int targetSeatInRow;
+		int initStowTime;
 		int stowTime;
 
 		int lifetime;

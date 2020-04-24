@@ -20,9 +20,12 @@ Passenger createPassenger(int id, int targetRow, int targetSeat, int stowTimeMin
 	p.id = id;
 	p.targetRow = targetRow;
 	p.targetSeatInRow = targetSeat;
-	p.stowTime = randInt(stowTimeMin, stowTimeMax);
 	p.state = PassengerState::IN_QUEUE;
-
+	
+	int randStow = randInt(stowTimeMin, stowTimeMax);
+	p.stowTime = randStow;
+	p.initStowTime = randStow;
+	
 	return p;
 }
 

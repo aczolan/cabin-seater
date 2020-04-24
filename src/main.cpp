@@ -101,11 +101,16 @@ std::string GetOutputData(Airplane simAirplane, std::list<Passenger> pList)
 
 	//Calculate avg passenger lifetime
 	int sumLifetimes = 0;
+	int sumStowTimes = 0;
 	for (std::list<Passenger>::iterator p_it = pList.begin(); p_it != pList.end(); p_it++)
 	{
 		sumLifetimes += p_it->lifetime;
+		sumStowTimes += p_it->initStowTime;
 	}
-	double avgLifetime = sumLifetimes / pList.size() * 1.0;
+
+	double pListDouble = pList.size() * 1.0;
+	double avgLifetime = sumLifetimes / pListDouble;
+	double avgStowtime = sumStowTimes / pListDouble;
 
 	std::string ret = "" + 
 					simAirplane.RunID + "," +
@@ -116,7 +121,8 @@ std::string GetOutputData(Airplane simAirplane, std::list<Passenger> pList)
 					std::to_string(simAirplane.NumSeatsStbd) + "," +
 					std::to_string(simAirplane.PassengerMinStowTime) + "," +
 					std::to_string(simAirplane.PassengerMaxStowTime) + "," +
-					std::to_string(avgLifetime) +
+					std::to_string(avgLifetime) + "," +
+					std::to_string(avgStowtime) +
 					"\n";
 
 	return ret;
