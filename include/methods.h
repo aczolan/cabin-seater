@@ -34,7 +34,7 @@ void createPassengers_BackToFront(Airplane simAirplane, std::list<Passenger> &pA
 	int pCurrentIndex = pStartingIndex;
 	int numAssignedPassengers = 0;
 
-	for (int row = simAirplane.NumRows - 1; row >= 0; --row)
+	for (int row = simAirplane.NumRows - 1; row > 0; --row)
 	{
 		for (int seat = 0; seat < simAirplane.NumSeatsPort + simAirplane.NumSeatsStbd; seat++)
 		{
@@ -45,6 +45,7 @@ void createPassengers_BackToFront(Airplane simAirplane, std::list<Passenger> &pA
 
 				pAll.push_back(p);
 				pQueue.push(p);
+				pCurrentIndex++;
 				numAssignedPassengers++;
 				if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);				
 			}
@@ -73,6 +74,7 @@ void createPassengers_FrontToBack(Airplane simAirplane, std::list<Passenger> &pA
 
 				pAll.push_back(p);
 				pQueue.push(p);
+				pCurrentIndex++;
 				numAssignedPassengers++;
 				if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);				
 			}
@@ -283,11 +285,15 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 	int numAssignedPassengers = 0;
 	int pStartingIndex = simAirplane.PassengerIdStartingIndex;
 	int pCurrentIndex = pStartingIndex;
+
+	// Passenger p = createPassenger(pCurrentIndex, 1, 1, simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);
+	// pAll.push_back(p);
+	// pQueue.push(p);
 	
 	//Stbd even
 	for (int i = simAirplane.NumRows - 1; i >= 0; --i)
 	{
-		if (simAirplane.verboseOutput) printf("Looking at starboard seats in row %i\n", i);
+		if (true) printf("Looking at starboard seats in row %i\n", i);
 		if (!isEven(i))
 		{
 			continue;
@@ -295,7 +301,7 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 
 		for (int seatIndex = simAirplane.NumSeatsPort; seatIndex <= maxSeatId; seatIndex++)
 		{
-			if (!numAssignedPassengers >= simAirplane.NumPassengers)
+			if (numAssignedPassengers < simAirplane.NumPassengers)
 			{
 				Passenger p = createPassenger(pCurrentIndex, i, seatIndex, simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);
 				pAll.push_back(p);
@@ -303,7 +309,7 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 
 				pCurrentIndex++;
 				numAssignedPassengers++;
-				if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);				
+				if (true) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);				
 			}
 		}
 	}
@@ -311,7 +317,7 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 	//Port even
 	for (int i = simAirplane.NumRows - 1; i >= 0; --i)
 	{
-		if (simAirplane.verboseOutput) printf("Looking at port seats in row %i\n", i);
+		if (true) printf("Looking at port seats in row %i\n", i);
 		if (!isEven(i))
 		{
 			continue;
@@ -319,7 +325,7 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 
 		for (int seatIndex = 0; seatIndex < simAirplane.NumSeatsPort; seatIndex++)
 		{
-			if (numAssignedPassengers >= simAirplane.NumPassengers)
+			if (numAssignedPassengers < simAirplane.NumPassengers)
 			{
 				Passenger p = createPassenger(pCurrentIndex, i, seatIndex, simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);
 
@@ -329,7 +335,7 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 
 				pCurrentIndex++;
 				numAssignedPassengers++;
-				if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);				
+				if (true) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);				
 			}
 		}
 	}
@@ -337,7 +343,7 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 	//Stbd odd
 	for (int i = simAirplane.NumRows - 1; i >= 0; --i)
 	{
-		if (simAirplane.verboseOutput) printf("Looking at starboard seats in row %i\n", i);
+		if (true) printf("Looking at starboard seats in row %i\n", i);
 		if (isEven(i))
 		{
 			continue;
@@ -345,7 +351,7 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 
 		for (int seatIndex = simAirplane.NumSeatsPort; seatIndex <= maxSeatId; seatIndex++)
 		{
-			if (numAssignedPassengers >= simAirplane.NumPassengers)
+			if (numAssignedPassengers < simAirplane.NumPassengers)
 			{
 				Passenger p = createPassenger(pCurrentIndex, i, seatIndex, simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);
 
@@ -355,7 +361,7 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 
 				pCurrentIndex++;
 				numAssignedPassengers++;
-				if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);				
+				if (true) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);				
 			}
 		}
 	}
@@ -363,7 +369,7 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 	//Port odd
 	for (int i = simAirplane.NumRows - 1; i >= 0; --i)
 	{
-		if (simAirplane.verboseOutput) printf("Looking at port seats in row %i\n", i);
+		if (true) printf("Looking at port seats in row %i\n", i);
 		if (isEven(i))
 		{
 			continue;
@@ -371,7 +377,7 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 
 		for (int seatIndex = 0; seatIndex < simAirplane.NumSeatsPort; seatIndex++)
 		{
-			if (numAssignedPassengers >= simAirplane.NumPassengers)
+			if (numAssignedPassengers < simAirplane.NumPassengers)
 			{
 				Passenger p = createPassenger(pCurrentIndex, i, seatIndex, simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);
 
@@ -381,7 +387,7 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 
 				pCurrentIndex++;
 				numAssignedPassengers++;
-				if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);				
+				if (true) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);				
 			}
 		}
 	}

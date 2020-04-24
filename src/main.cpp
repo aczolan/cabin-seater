@@ -20,7 +20,7 @@ const int setting_PASSENGER_MINSTOWTIME = 2;
 const int setting_PASSENGER_MAXSTOWTIME = 10;
 const int setting_PASSENGERS_STARTING_INDEX = 100;
 
-const int setting_GLOBAL_TIMER_TIMEOUT = 200;
+const int setting_GLOBAL_TIMER_TIMEOUT = 100;
 
 bool setting_Verbose = true;
 bool g_RunSimulation = true;
