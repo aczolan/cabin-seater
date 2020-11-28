@@ -30,6 +30,8 @@ SimulatorState g_SimState;
 
 bool PopulatePassengerList(int queueingAlgorithm, Airplane plane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
 {
+	bool covidSeating = plane.CovidSeating;
+	
 	//1: Back-To-Front
 	//2: Front-To-Back
 	//3: Random
@@ -40,22 +42,22 @@ bool PopulatePassengerList(int queueingAlgorithm, Airplane plane, std::list<Pass
 	switch(queueingAlgorithm)
 	{
 		case 1:
-			createPassengers_BackToFront(plane, pAll, pQueue);
+			createPassengers_BackToFront(plane, pAll, pQueue, covidSeating);
 			return true;
 		case 2:
-			createPassengers_FrontToBack(plane, pAll, pQueue);
+			createPassengers_FrontToBack(plane, pAll, pQueue, covidSeating);
 			return true;
 		case 3:
-			createPassengers_Random(plane, pAll, pQueue);
+			createPassengers_Random(plane, pAll, pQueue, covidSeating);
 			return true;
 		case 4:
-			createPassengers_WindowMiddleAisle(plane, pAll, pQueue);
+			createPassengers_WindowMiddleAisle(plane, pAll, pQueue, covidSeating);
 			return true;
 		case 5:
-			createPassengers_SteffenPerfect(plane, pAll, pQueue);
+			createPassengers_SteffenPerfect(plane, pAll, pQueue, covidSeating);
 			return true;
 		case 6:
-			createPassengers_SteffenModified(plane, pAll, pQueue);
+			createPassengers_SteffenModified(plane, pAll, pQueue, covidSeating);
 			return true;
 		default:
 			return false;
@@ -154,8 +156,9 @@ int main(int argc, char *argv[])
 	//argv[5] = max stow time
 	//argv[6] = num passengers
 	//argv[7] = num rows
+	//argv[8] = enable covid seating
 
-	int numExpectedArgs = 8;
+	int numExpectedArgs = 9;
 	if (argc != numExpectedArgs)
 	{
 		//Wrong number of args
@@ -183,6 +186,7 @@ int main(int argc, char *argv[])
 	SimAirplane.PassengerMaxStowTime = std::atoi(ArgsList[5]);
 	SimAirplane.NumPassengers = std::atoi(ArgsList[6]);
 	SimAirplane.NumRows = std::atoi(ArgsList[7]);
+	SimAirplane.CovidSeating = std::atoi(ArgsList[8]);
 	SimAirplane.LastRowIndex = SimAirplane.NumRows - 1;
 
 	if (setting_Verbose) printf("ArgsList Contents:\n");
@@ -249,7 +253,7 @@ int main(int argc, char *argv[])
 				}
 				else
 				{
-					printf("Front of queue passenger: %i\n", passengersQueue.front().id);
+					if (setting_Verbose) printf("Front of queue passenger: %i\n", passengersQueue.front().id);
 				}
 
 				//Move to the aisle's first space if it is unoccupied

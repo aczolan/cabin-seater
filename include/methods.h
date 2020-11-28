@@ -29,18 +29,48 @@ Passenger createPassenger(int id, int targetRow, int targetSeat, int stowTimeMin
 	return p;
 }
 
-void createPassengers_BackToFront(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
-{	
+//Get the seat indexes that should not be assigned to passengers when "Covid" queueing is enabled
+std::list<int> getRestrictedSeatIndexes(int numSeatsPort, int numSeatsStbd)
+{
+	std::list<int> restrictedIndexes;
+	int totalNumSeats = numSeatsPort + numSeatsStbd;
+	//Get restricted port indexes
+	if (numSeatsPort > 1)
+	{
+		for (int i = 1; i < numSeatsPort - 1; i += 2)
+		{
+			restrictedIndexes.push_back(i);
+		}
+	}
+	//Get restricted stbd indexes
+	if (numSeatsStbd > 1)
+	{
+		for (int i = totalNumSeats - 2; i >= numSeatsPort; i -= 2)
+		{
+			restrictedIndexes.push_back(i);
+		}
+	}
+	return restrictedIndexes;
+}
+
+void createPassengers_BackToFront(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue, bool restrictSeats)
+{
 	//Add passengers to the queue in order of seat location from back of the cabin
 
 	int pStartingIndex = simAirplane.PassengerIdStartingIndex;
 	int pCurrentIndex = pStartingIndex;
 	int numAssignedPassengers = 0;
+	auto restrictedIndexes = getRestrictedSeatIndexes(simAirplane.NumSeatsPort, simAirplane.NumSeatsStbd);
 
 	for (int row = simAirplane.NumRows - 1; row > 0; --row)
 	{
 		for (int seat = 0; seat < simAirplane.NumSeatsPort + simAirplane.NumSeatsStbd; seat++)
 		{
+			if (restrictSeats && listContainsInt(restrictedIndexes, seat))
+			{
+				//Do not assign this seat to a passenger
+				continue;
+			}
 			if (numAssignedPassengers != simAirplane.NumPassengers)
 			{
 				Passenger p = createPassenger(pCurrentIndex, row, seat, 
@@ -58,18 +88,24 @@ void createPassengers_BackToFront(Airplane simAirplane, std::list<Passenger> &pA
 	if (simAirplane.verboseOutput) printf("Created %i passengers with Back-to-Front.\n", numAssignedPassengers);
 }
 
-void createPassengers_FrontToBack(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
+void createPassengers_FrontToBack(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue, bool restrictSeats)
 {
 	//Add passengers to the queue in order of seat location from the front of the cabin
 
 	int pStartingIndex = simAirplane.PassengerIdStartingIndex;
 	int pCurrentIndex = pStartingIndex;
 	int numAssignedPassengers = 0;
+	auto restrictedIndexes = getRestrictedSeatIndexes(simAirplane.NumSeatsPort, simAirplane.NumSeatsStbd);
 
 	for (int row = 0; row < simAirplane.NumRows; row++)
 	{
 		for (int seat = 0; seat < simAirplane.NumSeatsPort + simAirplane.NumSeatsStbd; seat++)
 		{
+			if (restrictSeats && listContainsInt(restrictedIndexes, seat))
+			{
+				//Do not assign this seat to a passenger
+				continue;
+			}
 			if (numAssignedPassengers != simAirplane.NumPassengers)
 			{
 				Passenger p = createPassenger(pCurrentIndex, row, seat, 
@@ -79,7 +115,7 @@ void createPassengers_FrontToBack(Airplane simAirplane, std::list<Passenger> &pA
 				pQueue.push(p);
 				pCurrentIndex++;
 				numAssignedPassengers++;
-				if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);				
+				if (simAirplane.verboseOutput) printf("Created Passenger %i: Target Row: %i, Target Seat: %i\n", p.id, p.targetRow, p.targetSeatInRow);
 			}
 		}
 	}
@@ -87,8 +123,10 @@ void createPassengers_FrontToBack(Airplane simAirplane, std::list<Passenger> &pA
 	if (simAirplane.verboseOutput) printf("Created %i passengers with Front-to-Back.\n", numAssignedPassengers);
 }
 
-void createPassengers_Random(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
+void createPassengers_Random(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue, bool restrictSeats)
 {
+	auto restrictedIndexes = getRestrictedSeatIndexes(simAirplane.NumSeatsPort, simAirplane.NumSeatsStbd);
+
 	//Create list of all selectable seats
 	std::vector<std::pair<int, int>> SelectableSeats;
 	//Iterate over all seats and fill the list
@@ -96,6 +134,11 @@ void createPassengers_Random(Airplane simAirplane, std::list<Passenger> &pAll, s
 	{
 		for (int j = 0; j <= simAirplane.NumSeatsPort + simAirplane.NumSeatsStbd - 1; j++)
 		{
+			if (restrictSeats && listContainsInt(restrictedIndexes, j))
+			{
+				//Do not assign this seat to a passenger
+				continue;
+			}
 			auto seatPair = std::make_pair(i, j);
 			SelectableSeats.push_back(seatPair);
 		}
@@ -129,7 +172,7 @@ void createPassengers_Random(Airplane simAirplane, std::list<Passenger> &pAll, s
 	if (simAirplane.verboseOutput) printf("Created %i passengers with Random.\n", numAssignedPassengers);
 }
 
-void createPassengers_WindowMiddleAisle(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
+void createPassengers_WindowMiddleAisle(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue, bool restrictSeats)
 {
 	//Create a lists for window, middle, and aisle seats
 	//For now, we assume that:
@@ -148,9 +191,17 @@ void createPassengers_WindowMiddleAisle(Airplane simAirplane, std::list<Passenge
 	int portWindowIndex = 0;
 	int stbdWindowIndex = simAirplane.NumSeatsPort + simAirplane.NumSeatsStbd - 1;
 	int rowHalfwayIndex = stbdWindowIndex / 2;
+	printf("rowHalfwayIndex: %i \n", rowHalfwayIndex);
 
-	for (int indexesFromWindow = 0; indexesFromWindow < rowHalfwayIndex; indexesFromWindow++)
+	for (int indexesFromWindow = 0; indexesFromWindow < rowHalfwayIndex + 1; indexesFromWindow++)
 	{
+		printf("indexesFromWindow: %i \n", indexesFromWindow);
+		//When restricting seats, do not create boarding groups for seats with an odd-numbered distance from the window
+		if (restrictSeats && !isEven(indexesFromWindow))
+		{
+			continue;
+		}
+
 		std::vector< std::pair<int, int> > thisBoardingGroup;
 
 		for (int rowNumber = 0; rowNumber < simAirplane.NumRows; rowNumber++)
@@ -203,7 +254,7 @@ void createPassengers_WindowMiddleAisle(Airplane simAirplane, std::list<Passenge
 	if (simAirplane.verboseOutput) printf("Created %i passengers with Window-Middle-Aisle.\n", numAssignedPassengers);
 }
 
-void createPassengers_SteffenPerfect(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
+void createPassengers_SteffenPerfect(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue, bool restrictSeats)
 {
 	std::queue< std::pair<int, int> > seatAssignmentQueue;
 
@@ -211,10 +262,15 @@ void createPassengers_SteffenPerfect(Airplane simAirplane, std::list<Passenger> 
 	int stbdWindowIndex = simAirplane.NumSeatsPort + simAirplane.NumSeatsStbd - 1;
 	int rowHalfwayIndex = stbdWindowIndex / 2;
 
-	for (int indexesFromWindow = 0; indexesFromWindow < rowHalfwayIndex; indexesFromWindow++)
+	for (int indexesFromWindow = 0; indexesFromWindow < rowHalfwayIndex + 1; indexesFromWindow++)
 	{
-		//Starting from the back of the cabin...
+		//When restricting seats, do not assign seats with an odd-numbered distance from the window
+		if (restrictSeats && !isEven(indexesFromWindow))
+		{
+			continue;
+		}
 
+		//Starting from the back of the cabin...
 		//Select even seats on the port side
 		for (int rowIndex = simAirplane.NumRows - 1; rowIndex >= 0; --rowIndex)
 		{
@@ -281,13 +337,14 @@ void createPassengers_SteffenPerfect(Airplane simAirplane, std::list<Passenger> 
 	if (simAirplane.verboseOutput) printf("Created %i passengers with Steffen Perfect.\n", numAssignedPassengers);
 }
 
-void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue)
+void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger> &pAll, std::queue<Passenger> &pQueue, bool restrictSeats)
 {
 	//Assign seats to passengers
 	int maxSeatId = simAirplane.NumSeatsPort + simAirplane.NumSeatsStbd - 1;
 	int numAssignedPassengers = 0;
 	int pStartingIndex = simAirplane.PassengerIdStartingIndex;
 	int pCurrentIndex = pStartingIndex;
+	auto restrictedIndexes = getRestrictedSeatIndexes(simAirplane.NumSeatsPort, simAirplane.NumSeatsStbd);
 
 	// Passenger p = createPassenger(pCurrentIndex, 1, 1, simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);
 	// pAll.push_back(p);
@@ -304,6 +361,12 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 
 		for (int seatIndex = simAirplane.NumSeatsPort; seatIndex <= maxSeatId; seatIndex++)
 		{
+			if (restrictSeats && listContainsInt(restrictedIndexes, seatIndex))
+			{
+				//Do not assign this seat to a passenger
+				continue;
+			}
+
 			if (numAssignedPassengers < simAirplane.NumPassengers)
 			{
 				Passenger p = createPassenger(pCurrentIndex, i, seatIndex, simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);
@@ -328,6 +391,12 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 
 		for (int seatIndex = 0; seatIndex < simAirplane.NumSeatsPort; seatIndex++)
 		{
+			if (restrictSeats && listContainsInt(restrictedIndexes, seatIndex))
+			{
+				//Do not assign this seat to a passenger
+				continue;
+			}
+
 			if (numAssignedPassengers < simAirplane.NumPassengers)
 			{
 				Passenger p = createPassenger(pCurrentIndex, i, seatIndex, simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);
@@ -354,6 +423,12 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 
 		for (int seatIndex = simAirplane.NumSeatsPort; seatIndex <= maxSeatId; seatIndex++)
 		{
+			if (restrictSeats && listContainsInt(restrictedIndexes, seatIndex))
+			{
+				//Do not assign this seat to a passenger
+				continue;
+			}
+
 			if (numAssignedPassengers < simAirplane.NumPassengers)
 			{
 				Passenger p = createPassenger(pCurrentIndex, i, seatIndex, simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);
@@ -380,6 +455,12 @@ void createPassengers_SteffenModified(Airplane simAirplane, std::list<Passenger>
 
 		for (int seatIndex = 0; seatIndex < simAirplane.NumSeatsPort; seatIndex++)
 		{
+			if (restrictSeats && listContainsInt(restrictedIndexes, seatIndex))
+			{
+				//Do not assign this seat to a passenger
+				continue;
+			}
+
 			if (numAssignedPassengers < simAirplane.NumPassengers)
 			{
 				Passenger p = createPassenger(pCurrentIndex, i, seatIndex, simAirplane.PassengerMinStowTime, simAirplane.PassengerMaxStowTime);

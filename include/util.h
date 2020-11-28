@@ -6,6 +6,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 bool appendLineToFile(std::string filepath, std::string line)
 {
@@ -24,6 +25,13 @@ int randInt(int lower, int upper)
 bool isEven(int x)
 {
 	return ( (x % 2 == 0) || (x == 0) );
+}
+
+bool listContainsInt(std::list<int> l, int item)
+{
+	std::list<int>::iterator it;
+	it = std::find(l.begin(), l.end(), item);
+	return it != l.end();
 }
 
 #endif

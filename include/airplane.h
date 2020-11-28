@@ -13,6 +13,7 @@ class Airplane
 		std::string RunID;
 		std::string CSVname;
 		int SelectedAlgorithmID;
+		bool CovidSeating;
 
 		int NumRows;
 		int LastRowIndex;
